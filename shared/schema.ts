@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, jsonb, index, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -57,12 +57,18 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id),
   customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(),
-  deliveryAddress: text("delivery_address").notNull(),
+  customerPhone: text("customer_phone"),
+  phoneNumber: text("phone_number"),
+  email: text("email"),
+  deliveryAddress: text("delivery_address"),
   paymentMethod: text("payment_method").notNull(),
+  paymentStatus: text("payment_status").default("pending"),
   items: text("items").notNull(), // JSON string of cart items
-  totalAmount: integer("total_amount").notNull(), // total in cents
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: integer("total_amount"), // total in cents (legacy)
   status: text("status").notNull().default("pending"),
+  paynowReference: text("paynow_reference"),
+  pollUrl: text("poll_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

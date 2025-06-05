@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertInquirySchema, insertOrderSchema, insertInventoryMovementSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
+import { Paynow } from "paynow";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -231,6 +232,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching inventory movements:", error);
       res.status(500).json({ error: "Failed to fetch inventory movements" });
+    }
+  });
+
+  // PayNow payment integration
+  app.post("/api/create-paynow-payment", isAuthenticated, async (req: any, res) => {
+    try {
+      const { items, total, phoneNumber, email, customerName } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Initialize PayNow
+      const paynow = new Paynow(
+        process.env.PAYNOW_INTEGRATION_ID || "13431",
+        process.env.PAYNOW_INTEGRATION_KEY || "mock-key",
+        `${req.protocol}://${req.get('host')}/api/paynow/return`,
+        `${req.protocol}://${req.get('host')}/api/paynow/result`
+      );
+
+      // Create a new payment
+      const payment = paynow.createPayment(`Order-${Date.now()}`, email);
+
+      // Add items to the payment
+      items.forEach((item: any) => {
+        payment.add(item.name, item.price * item.quantity);
+      });
+
+      // Send payment to PayNow
+      const response = await paynow.send(payment);
+
+      if (response.success) {
+        // Create order in database
+        const orderData = {
+          userId,
+          status: 'pending',
+          total: parseFloat(total.toFixed(2)),
+          paymentMethod: 'paynow',
+          paymentStatus: 'pending',
+          items: JSON.stringify(items),
+          customerName,
+          phoneNumber,
+          email,
+          paynowReference: response.reference,
+          pollUrl: response.pollurl
+        };
+
+        const order = await storage.createOrder(orderData);
+
+        res.json({
+          success: true,
+          redirectUrl: response.redirecturl,
+          pollUrl: response.pollurl,
+          reference: response.reference,
+          orderId: order.id
+        });
+      } else {
+        console.error("PayNow payment creation failed:", response.error);
+        res.status(400).json({
+          success: false,
+          error: response.error || "Failed to create payment"
+        });
+      }
+    } catch (error) {
+      console.error("PayNow payment error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Payment processing failed"
+      });
+    }
+  });
+
+  // PayNow return URL handler
+  app.post("/api/paynow/return", async (req, res) => {
+    try {
+      const { reference, paynowreference, amount, status } = req.body;
+      
+      // Update order status based on payment result
+      if (status === "Paid") {
+        // Find and update the order
+        const orders = await storage.getOrders();
+        const order = orders.find(o => o.paynowReference === reference);
+        
+        if (order) {
+          await storage.updateOrderStatus(order.id, 'confirmed');
+          
+          // Update inventory for paid orders
+          const orderItems = JSON.parse(order.items || '[]');
+          for (const item of orderItems) {
+            const product = await storage.getProduct(item.productId);
+            if (product) {
+              const newStock = Math.max(0, product.stockQuantity - item.quantity);
+              await storage.updateProductStock(item.productId, newStock);
+              
+              // Create inventory movement
+              await storage.createInventoryMovement({
+                productId: item.productId,
+                movementType: 'sale',
+                quantity: -item.quantity,
+                reason: 'order_fulfillment',
+                notes: `Order #${order.id} - PayNow payment`
+              });
+            }
+          }
+        }
+        
+        res.redirect(`/?payment=success&order=${order?.id}`);
+      } else {
+        res.redirect(`/?payment=failed&reason=${status}`);
+      }
+    } catch (error) {
+      console.error("PayNow return handler error:", error);
+      res.redirect("/?payment=error");
+    }
+  });
+
+  // PayNow result URL handler (webhook)
+  app.post("/api/paynow/result", async (req, res) => {
+    try {
+      const { reference, paynowreference, amount, status } = req.body;
+      
+      console.log("PayNow webhook received:", { reference, status });
+      
+      // Update order status
+      if (reference) {
+        const orders = await storage.getOrders();
+        const order = orders.find(o => o.paynowReference === reference);
+        
+        if (order) {
+          if (status === "Paid") {
+            await storage.updateOrderStatus(order.id, 'confirmed');
+          } else if (status === "Cancelled" || status === "Failed") {
+            await storage.updateOrderStatus(order.id, 'cancelled');
+          }
+        }
+      }
+      
+      res.status(200).send("OK");
+    } catch (error) {
+      console.error("PayNow webhook error:", error);
+      res.status(500).send("Error");
     }
   });
 
