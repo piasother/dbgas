@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInquirySchema, insertOrderSchema } from "@shared/schema";
+import { insertInquirySchema, insertOrderSchema, insertInventoryMovementSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 
@@ -125,6 +125,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ error: "Failed to update order status" });
+    }
+  });
+
+  // Inventory Management Routes
+
+  // Get low stock products
+  app.get("/api/inventory/low-stock", isAuthenticated, async (req, res) => {
+    try {
+      const lowStockProducts = await storage.getLowStockProducts();
+      res.json(lowStockProducts);
+    } catch (error) {
+      console.error("Error fetching low stock products:", error);
+      res.status(500).json({ error: "Failed to fetch low stock products" });
+    }
+  });
+
+  // Get stock alerts
+  app.get("/api/inventory/alerts", isAuthenticated, async (req, res) => {
+    try {
+      const alerts = await storage.getActiveStockAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching stock alerts:", error);
+      res.status(500).json({ error: "Failed to fetch stock alerts" });
+    }
+  });
+
+  // Acknowledge stock alert
+  app.patch("/api/inventory/alerts/:id/acknowledge", isAuthenticated, async (req: any, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+
+      if (isNaN(alertId)) {
+        return res.status(400).json({ error: "Invalid alert ID" });
+      }
+
+      const alert = await storage.acknowledgeStockAlert(alertId, userId);
+      res.json(alert);
+    } catch (error) {
+      console.error("Error acknowledging stock alert:", error);
+      res.status(500).json({ error: "Failed to acknowledge stock alert" });
+    }
+  });
+
+  // Update product stock
+  app.patch("/api/products/:id/stock", isAuthenticated, async (req: any, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const { stockQuantity } = req.body;
+      const userId = req.user.claims.sub;
+
+      if (isNaN(productId)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      if (typeof stockQuantity !== 'number' || stockQuantity < 0) {
+        return res.status(400).json({ error: "Valid stock quantity is required" });
+      }
+
+      const product = await storage.updateProductStock(productId, stockQuantity);
+      
+      // Create inventory movement record
+      await storage.createInventoryMovement({
+        productId,
+        movementType: 'adjustment',
+        quantity: stockQuantity,
+        reason: 'manual_adjustment',
+        userId,
+        notes: 'Stock updated via admin interface',
+      });
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product stock:", error);
+      res.status(500).json({ error: "Failed to update product stock" });
+    }
+  });
+
+  // Adjust stock (add/remove inventory)
+  app.post("/api/inventory/adjust", isAuthenticated, async (req: any, res) => {
+    try {
+      const { productId, quantity, reason, notes } = req.body;
+      const userId = req.user.claims.sub;
+
+      if (!productId || typeof quantity !== 'number' || !reason) {
+        return res.status(400).json({ error: "Product ID, quantity, and reason are required" });
+      }
+
+      await storage.adjustStock(productId, quantity, reason, userId, notes);
+      res.json({ message: "Stock adjusted successfully" });
+    } catch (error) {
+      console.error("Error adjusting stock:", error);
+      res.status(500).json({ error: "Failed to adjust stock" });
+    }
+  });
+
+  // Get inventory movements
+  app.get("/api/inventory/movements", isAuthenticated, async (req, res) => {
+    try {
+      const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
+      const movements = await storage.getInventoryMovements(productId);
+      res.json(movements);
+    } catch (error) {
+      console.error("Error fetching inventory movements:", error);
+      res.status(500).json({ error: "Failed to fetch inventory movements" });
     }
   });
 

@@ -73,6 +73,12 @@ export function Layout({ children }: LayoutProps) {
                           Account
                         </Button>
                       </Link>
+                      <Link href="/inventory">
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <i className="fas fa-boxes h-4 w-4"></i>
+                          Inventory
+                        </Button>
+                      </Link>
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -125,6 +131,12 @@ export function Layout({ children }: LayoutProps) {
                         <button className="mobile-nav-link flex items-center gap-2">
                           <User className="h-4 w-4" />
                           My Account
+                        </button>
+                      </Link>
+                      <Link href="/inventory">
+                        <button className="mobile-nav-link flex items-center gap-2">
+                          <i className="fas fa-boxes h-4 w-4"></i>
+                          Inventory
                         </button>
                       </Link>
                       <button 

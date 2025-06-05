@@ -227,6 +227,135 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return order;
   }
+
+  // Inventory Management Methods
+  async updateProductStock(productId: number, newStock: number): Promise<Product> {
+    const [product] = await db
+      .update(products)
+      .set({ 
+        stockQuantity: newStock, 
+        inStock: newStock > 0,
+        updatedAt: new Date() 
+      })
+      .where(eq(products.id, productId))
+      .returning();
+    
+    // Check if stock alert should be created
+    if (newStock <= product.lowStockThreshold) {
+      await this.createStockAlert({
+        productId,
+        alertType: newStock === 0 ? 'out_of_stock' : 'low_stock',
+        currentStock: newStock,
+        threshold: product.lowStockThreshold,
+      });
+    }
+    
+    return product;
+  }
+
+  async createInventoryMovement(movement: InsertInventoryMovement): Promise<InventoryMovement> {
+    const [created] = await db
+      .insert(inventoryMovements)
+      .values(movement)
+      .returning();
+    return created;
+  }
+
+  async getInventoryMovements(productId?: number): Promise<InventoryMovement[]> {
+    if (productId) {
+      return await db
+        .select()
+        .from(inventoryMovements)
+        .where(eq(inventoryMovements.productId, productId))
+        .orderBy(desc(inventoryMovements.createdAt));
+    }
+    return await db
+      .select()
+      .from(inventoryMovements)
+      .orderBy(desc(inventoryMovements.createdAt));
+  }
+
+  async getLowStockProducts(): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(lt(products.stockQuantity, products.lowStockThreshold));
+  }
+
+  async createStockAlert(alert: InsertStockAlert): Promise<StockAlert> {
+    // Check if similar alert already exists and is active
+    const existingAlert = await db
+      .select()
+      .from(stockAlerts)
+      .where(
+        and(
+          eq(stockAlerts.productId, alert.productId),
+          eq(stockAlerts.alertType, alert.alertType),
+          eq(stockAlerts.isActive, true)
+        )
+      );
+
+    if (existingAlert.length > 0) {
+      return existingAlert[0];
+    }
+
+    const [created] = await db
+      .insert(stockAlerts)
+      .values(alert)
+      .returning();
+    return created;
+  }
+
+  async getActiveStockAlerts(): Promise<StockAlert[]> {
+    return await db
+      .select()
+      .from(stockAlerts)
+      .where(eq(stockAlerts.isActive, true))
+      .orderBy(desc(stockAlerts.createdAt));
+  }
+
+  async acknowledgeStockAlert(alertId: number, userId: string): Promise<StockAlert> {
+    const [updated] = await db
+      .update(stockAlerts)
+      .set({
+        isActive: false,
+        acknowledgedBy: userId,
+        acknowledgedAt: new Date(),
+      })
+      .where(eq(stockAlerts.id, alertId))
+      .returning();
+    return updated;
+  }
+
+  async adjustStock(
+    productId: number, 
+    quantity: number, 
+    reason: string, 
+    userId?: string, 
+    notes?: string
+  ): Promise<void> {
+    // Get current product
+    const product = await this.getProduct(productId);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    const newStock = product.stockQuantity + quantity;
+    const movementType = quantity > 0 ? 'in' : 'out';
+
+    // Update product stock
+    await this.updateProductStock(productId, newStock);
+
+    // Create inventory movement record
+    await this.createInventoryMovement({
+      productId,
+      movementType,
+      quantity: Math.abs(quantity),
+      reason,
+      userId,
+      notes,
+    });
+  }
 }
 
 export const storage = new DatabaseStorage();
