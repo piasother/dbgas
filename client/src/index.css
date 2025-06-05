@@ -103,7 +103,7 @@
   }
 
   .cart-indicator {
-    @apply fixed top-5 right-5 bg-secondary text-white rounded-full px-5 py-2 font-semibold shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer z-50;
+    @apply fixed top-20 right-5 bg-secondary text-white rounded-full px-5 py-2 font-semibold shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer z-40;
   }
 
   .whatsapp-float {
