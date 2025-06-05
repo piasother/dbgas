@@ -11,6 +11,14 @@ export const products = pgTable("products", {
   image: text("image").notNull(),
   badge: text("badge"), // optional badge text
   inStock: boolean("in_stock").notNull().default(true),
+  stockQuantity: integer("stock_quantity").notNull().default(0),
+  lowStockThreshold: integer("low_stock_threshold").notNull().default(10),
+  reorderLevel: integer("reorder_level").notNull().default(5),
+  sku: text("sku").unique(), // Stock Keeping Unit
+  supplier: text("supplier"),
+  lastRestockedAt: timestamp("last_restocked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const inquiries = pgTable("inquiries", {
@@ -59,6 +67,32 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Inventory movement tracking
+export const inventoryMovements = pgTable("inventory_movements", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  movementType: text("movement_type").notNull(), // 'in', 'out', 'adjustment'
+  quantity: integer("quantity").notNull(),
+  reason: text("reason").notNull(), // 'sale', 'restock', 'damaged', 'adjustment'
+  reference: text("reference"), // order ID, supplier invoice, etc.
+  userId: varchar("user_id").references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Stock alerts for low inventory
+export const stockAlerts = pgTable("stock_alerts", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  alertType: text("alert_type").notNull(), // 'low_stock', 'out_of_stock', 'reorder'
+  currentStock: integer("current_stock").notNull(),
+  threshold: integer("threshold").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  acknowledgedBy: varchar("acknowledged_by").references(() => users.id),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
 });
@@ -80,6 +114,16 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const insertInventoryMovementSchema = createInsertSchema(inventoryMovements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStockAlertSchema = createInsertSchema(stockAlerts).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Inquiry = typeof inquiries.$inferSelect;
@@ -89,3 +133,7 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
+export type InventoryMovement = typeof inventoryMovements.$inferSelect;
+export type InsertInventoryMovement = z.infer<typeof insertInventoryMovementSchema>;
+export type StockAlert = typeof stockAlerts.$inferSelect;
+export type InsertStockAlert = z.infer<typeof insertStockAlertSchema>;

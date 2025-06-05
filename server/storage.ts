@@ -2,7 +2,9 @@ import {
   users,
   products, 
   inquiries, 
-  orders, 
+  orders,
+  inventoryMovements,
+  stockAlerts,
   type User,
   type UpsertUser,
   type Product, 
@@ -10,10 +12,14 @@ import {
   type Inquiry, 
   type InsertInquiry, 
   type Order, 
-  type InsertOrder 
+  type InsertOrder,
+  type InventoryMovement,
+  type InsertInventoryMovement,
+  type StockAlert,
+  type InsertStockAlert
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, lt, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -23,6 +29,7 @@ export interface IStorage {
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
+  updateProductStock(productId: number, newStock: number): Promise<Product>;
   
   // Inquiries
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
@@ -32,6 +39,15 @@ export interface IStorage {
   getOrders(): Promise<Order[]>;
   getUserOrders(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order>;
+  
+  // Inventory Management
+  createInventoryMovement(movement: InsertInventoryMovement): Promise<InventoryMovement>;
+  getInventoryMovements(productId?: number): Promise<InventoryMovement[]>;
+  getLowStockProducts(): Promise<Product[]>;
+  createStockAlert(alert: InsertStockAlert): Promise<StockAlert>;
+  getActiveStockAlerts(): Promise<StockAlert[]>;
+  acknowledgeStockAlert(alertId: number, userId: string): Promise<StockAlert>;
+  adjustStock(productId: number, quantity: number, reason: string, userId?: string, notes?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -70,6 +86,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "ZERA Approved",
         inStock: true,
+        stockQuantity: 150,
+        lowStockThreshold: 20,
+        reorderLevel: 10,
+        sku: "CYL-9KG-001",
+        supplier: "Zimbabwe Gas Suppliers Ltd",
       },
       {
         name: "19kg Cylinder Refill",
@@ -79,6 +100,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1574263867128-2e2c9cf14319?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "Most Popular",
         inStock: true,
+        stockQuantity: 85,
+        lowStockThreshold: 15,
+        reorderLevel: 8,
+        sku: "CYL-19KG-002",
+        supplier: "Zimbabwe Gas Suppliers Ltd",
       },
       {
         name: "48kg Cylinder Purchase",
@@ -88,6 +114,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "Commercial Grade",
         inStock: true,
+        stockQuantity: 25,
+        lowStockThreshold: 5,
+        reorderLevel: 3,
+        sku: "CYL-48KG-003",
+        supplier: "Commercial Gas Zimbabwe",
       },
       {
         name: "Empty 48kg Dual Valve Cylinder",
@@ -97,6 +128,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "Dual Valve",
         inStock: true,
+        stockQuantity: 12,
+        lowStockThreshold: 5,
+        reorderLevel: 2,
+        sku: "CYL-48KG-EMPTY-004",
+        supplier: "Commercial Gas Zimbabwe",
       },
       {
         name: "Regulator Set",
@@ -106,6 +142,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1609696942946-a2cf2be57815?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "Safety Certified",
         inStock: true,
+        stockQuantity: 45,
+        lowStockThreshold: 10,
+        reorderLevel: 5,
+        sku: "REG-STD-005",
+        supplier: "Safety Parts Zimbabwe",
       },
       {
         name: "1.5m LPG Hose",
@@ -115,6 +156,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1619983081563-430f63602796?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "1.5m Length",
         inStock: true,
+        stockQuantity: 8,
+        lowStockThreshold: 15,
+        reorderLevel: 10,
+        sku: "HOSE-1.5M-006",
+        supplier: "Safety Parts Zimbabwe",
       },
       {
         name: "Conversion Kit",
@@ -124,6 +170,11 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
         badge: "Universal",
         inStock: true,
+        stockQuantity: 22,
+        lowStockThreshold: 8,
+        reorderLevel: 5,
+        sku: "CONV-KIT-007",
+        supplier: "Gas Solutions Zimbabwe",
       },
     ];
 
