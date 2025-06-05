@@ -27,17 +27,25 @@ export function useCart() {
   }, [items]);
 
   const addItem = (product: Product, quantity: number = 1) => {
+    console.log('useCart addItem called with:', product.name, 'quantity:', quantity);
     setItems(currentItems => {
+      console.log('Current cart items:', currentItems.length);
       const existingItem = currentItems.find(item => item.product.id === product.id);
       
       if (existingItem) {
-        return currentItems.map(item =>
+        console.log('Updating existing item');
+        const updated = currentItems.map(item =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
+        console.log('Updated cart items:', updated.length);
+        return updated;
       } else {
-        return [...currentItems, { product, quantity }];
+        console.log('Adding new item to cart');
+        const newItems = [...currentItems, { product, quantity }];
+        console.log('New cart items:', newItems.length);
+        return newItems;
       }
     });
   };

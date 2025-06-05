@@ -11,8 +11,14 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = async () => {
+    console.log('Adding to cart:', product.name);
     setIsAdding(true);
-    addItem(product);
+    try {
+      addItem(product);
+      console.log('Successfully added to cart');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
     
     // Show visual feedback
     setTimeout(() => {
