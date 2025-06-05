@@ -265,13 +265,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orderData = {
           userId,
           status: 'pending',
-          total: parseFloat(total.toFixed(2)),
+          total: Math.round(total * 100), // convert to cents
           paymentMethod: 'paynow',
           paymentStatus: 'pending',
           items: JSON.stringify(items),
           customerName,
+          customerPhone: phoneNumber,
           phoneNumber,
           email,
+          deliveryAddress: 'TBD', // Set default delivery address
           paynowReference: response.reference,
           pollUrl: response.pollurl
         };

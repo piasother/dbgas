@@ -14,12 +14,14 @@ import { useLocation } from "wouter";
 
 export function Checkout() {
   const { user, isAuthenticated } = useAuth();
-  const { items, total, clearCart } = useCart();
+  const { items, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [paymentMethod, setPaymentMethod] = useState("paynow");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
+
+  const total = getTotalPrice();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -42,8 +44,8 @@ export function Checkout() {
       return;
     }
 
-    if (user?.email) {
-      setEmail(user.email);
+    if (user && typeof user === 'object' && 'email' in user && user.email) {
+      setEmail(user.email as string);
     }
   }, [isAuthenticated, items.length, user, toast, setLocation]);
 
@@ -103,9 +105,9 @@ export function Checkout() {
       paymentMethod: paymentMethod,
       phoneNumber: phoneNumber,
       email: email,
-      customerName: user?.firstName && user?.lastName 
+      customerName: user && 'firstName' in user && 'lastName' in user && user.firstName && user.lastName 
         ? `${user.firstName} ${user.lastName}` 
-        : user?.email || "Customer",
+        : (user && 'email' in user && user.email) || "Customer",
     };
 
     createPaymentMutation.mutate(paymentData);

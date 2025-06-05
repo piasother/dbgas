@@ -64,7 +64,7 @@ export const orders = pgTable("orders", {
   paymentMethod: text("payment_method").notNull(),
   paymentStatus: text("payment_status").default("pending"),
   items: text("items").notNull(), // JSON string of cart items
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  total: integer("total").notNull(), // total in cents
   totalAmount: integer("total_amount"), // total in cents (legacy)
   status: text("status").notNull().default("pending"),
   paynowReference: text("paynow_reference"),
