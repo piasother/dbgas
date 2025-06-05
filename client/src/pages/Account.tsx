@@ -13,6 +13,9 @@ import type { Order, User as UserType } from "@shared/schema";
 export function Account() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  
+  // Type the user data properly
+  const userData = user as UserType;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -92,26 +95,26 @@ export function Account() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  {user?.profileImageUrl && (
+                  {userData?.profileImageUrl && (
                     <img
-                      src={user.profileImageUrl}
+                      src={userData.profileImageUrl}
                       alt="Profile"
                       className="w-16 h-16 rounded-full object-cover"
                     />
                   )}
                   <div>
                     <h3 className="font-semibold text-lg">
-                      {user?.firstName || user?.lastName 
-                        ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                      {userData?.firstName || userData?.lastName 
+                        ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
                         : 'User'
                       }
                     </h3>
-                    <p className="text-gray-600">{user?.email}</p>
+                    <p className="text-gray-600">{userData?.email}</p>
                   </div>
                 </div>
                 <Separator />
                 <div className="text-sm text-gray-600">
-                  <p>Member since {new Date(user?.createdAt || '').toLocaleDateString()}</p>
+                  <p>Member since {new Date(userData?.createdAt || '').toLocaleDateString()}</p>
                 </div>
               </CardContent>
             </Card>
