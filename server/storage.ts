@@ -67,7 +67,8 @@ export class DatabaseStorage implements IStorage {
         description: "Perfect for small households and apartments. Clean burning and efficient.",
         price: 1100, // $11.00 in cents
         category: "lpg",
-        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "ZERA Approved",
         inStock: true,
       },
       {
@@ -75,7 +76,8 @@ export class DatabaseStorage implements IStorage {
         description: "Ideal for families and medium-sized businesses. Long-lasting supply.",
         price: 2200, // $22.00 in cents
         category: "lpg",
-        imageUrl: "https://images.unsplash.com/photo-1574263867128-2e2c9cf14319?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1574263867128-2e2c9cf14319?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "Most Popular",
         inStock: true,
       },
       {
@@ -83,7 +85,8 @@ export class DatabaseStorage implements IStorage {
         description: "Heavy-duty cylinder for commercial use. Includes safety features.",
         price: 9500, // $95.00 in cents
         category: "lpg",
-        imageUrl: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "Commercial Grade",
         inStock: true,
       },
       {
@@ -91,7 +94,8 @@ export class DatabaseStorage implements IStorage {
         description: "Professional-grade empty cylinder with dual valve system for safety.",
         price: 6000, // $60.00 in cents
         category: "lpg",
-        imageUrl: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "Dual Valve",
         inStock: true,
       },
       {
@@ -99,7 +103,8 @@ export class DatabaseStorage implements IStorage {
         description: "High-quality pressure regulator for safe gas flow control.",
         price: 1800, // $18.00 in cents
         category: "accessories",
-        imageUrl: "https://images.unsplash.com/photo-1609696942946-a2cf2be57815?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1609696942946-a2cf2be57815?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "Safety Certified",
         inStock: true,
       },
       {
@@ -107,7 +112,8 @@ export class DatabaseStorage implements IStorage {
         description: "Durable, flexible hose for connecting appliances to gas supply.",
         price: 600, // $6.00 in cents
         category: "accessories",
-        imageUrl: "https://images.unsplash.com/photo-1619983081563-430f63602796?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1619983081563-430f63602796?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "1.5m Length",
         inStock: true,
       },
       {
@@ -115,7 +121,8 @@ export class DatabaseStorage implements IStorage {
         description: "Complete kit for converting appliances to LPG operation.",
         price: 2500, // $25.00 in cents
         category: "accessories",
-        imageUrl: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        badge: "Universal",
         inStock: true,
       },
     ];
