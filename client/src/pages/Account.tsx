@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Package, Calendar, Phone, MapPin, CreditCard } from "lucide-react";
-import type { Order } from "@shared/schema";
+import { User as UserIcon, Package, Calendar, Phone, MapPin, CreditCard } from "lucide-react";
+import type { Order, User as UserType } from "@shared/schema";
 
 export function Account() {
   const { toast } = useToast();
@@ -86,7 +86,7 @@ export function Account() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5" />
                   Profile Information
                 </CardTitle>
               </CardHeader>

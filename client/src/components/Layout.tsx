@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
 import { Cart } from './Cart';
+import { Button } from '@/components/ui/button';
+import { User } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +14,7 @@ export function Layout({ children }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems, getTotalPrice } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -44,7 +48,7 @@ export function Layout({ children }: LayoutProps) {
 
             {/* Desktop Navigation */}
             <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
+              <div className="ml-10 flex items-center space-x-4">
                 <button onClick={() => scrollToSection('home')} className="nav-link">Home</button>
                 <button onClick={() => scrollToSection('about')} className="nav-link">About Us</button>
                 <button onClick={() => scrollToSection('services')} className="nav-link">Services</button>
@@ -53,6 +57,34 @@ export function Layout({ children }: LayoutProps) {
                 <button onClick={() => scrollToSection('accessories')} className="nav-link">Accessories</button>
                 <button onClick={() => scrollToSection('safety')} className="nav-link">Safety</button>
                 <button onClick={() => scrollToSection('contact')} className="nav-link">Contact</button>
+                
+                {/* Authentication Controls */}
+                <div className="ml-4 border-l pl-4">
+                  {isAuthenticated ? (
+                    <div className="flex items-center space-x-2">
+                      <Link href="/account">
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Account
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => window.location.href = "/api/logout"}
+                      >
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      size="sm"
+                      onClick={() => window.location.href = "/api/login"}
+                    >
+                      Login
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -79,6 +111,33 @@ export function Layout({ children }: LayoutProps) {
                 <button onClick={() => scrollToSection('accessories')} className="mobile-nav-link">Accessories</button>
                 <button onClick={() => scrollToSection('safety')} className="mobile-nav-link">Safety</button>
                 <button onClick={() => scrollToSection('contact')} className="mobile-nav-link">Contact</button>
+                
+                {/* Mobile Authentication Controls */}
+                <div className="border-t pt-2 mt-2">
+                  {isAuthenticated ? (
+                    <div className="space-y-1">
+                      <Link href="/account">
+                        <button className="mobile-nav-link flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          My Account
+                        </button>
+                      </Link>
+                      <button 
+                        className="mobile-nav-link text-red-600"
+                        onClick={() => window.location.href = "/api/logout"}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      className="mobile-nav-link text-blue-600 font-semibold"
+                      onClick={() => window.location.href = "/api/login"}
+                    >
+                      Login
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
