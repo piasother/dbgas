@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Cart } from './Cart';
 import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
+import logoImage from '@assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
                 <img 
-                  src="/assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png" 
+                  src={logoImage} 
                   alt="DB Gas - Energy for Life" 
                   className="h-10 w-auto mr-2"
                 />
@@ -159,7 +160,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
               <img 
-                src="/assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png" 
+                src={logoImage} 
                 alt="DB Gas - Energy for Life" 
                 className="h-8 w-auto mr-2 filter brightness-0 invert"
               />
