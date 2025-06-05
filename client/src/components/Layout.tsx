@@ -123,14 +123,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Cart Sidebar */}
       <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      <style jsx>{`
-        .nav-link {
-          @apply text-primary hover:text-secondary font-medium px-3 py-2 rounded-md text-sm transition-colors duration-200;
-        }
-        .mobile-nav-link {
-          @apply text-primary hover:text-secondary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium w-full text-left transition-colors duration-200;
-        }
-      `}</style>
+
     </div>
   );
 }

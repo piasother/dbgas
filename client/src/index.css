@@ -115,7 +115,7 @@
   }
 
   .badge-safety {
-    @apply bg-success text-white px-2 py-1 text-xs rounded-full;
+    @apply bg-green-600 text-white px-2 py-1 text-xs rounded-full;
   }
 
   .price-tag {
@@ -124,6 +124,14 @@
 
   .compliance-badge {
     @apply w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md text-2xl text-primary mx-auto mb-4;
+  }
+
+  .nav-link {
+    @apply text-primary hover:text-secondary font-medium px-3 py-2 rounded-md text-sm transition-colors duration-200;
+  }
+
+  .mobile-nav-link {
+    @apply text-primary hover:text-secondary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium w-full text-left transition-colors duration-200;
   }
 }
 
