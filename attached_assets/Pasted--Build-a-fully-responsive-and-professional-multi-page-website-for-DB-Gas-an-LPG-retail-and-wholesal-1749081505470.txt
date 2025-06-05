@@ -1,0 +1,71 @@
+
+Build a fully responsive and professional multi-page website for DB Gas, an LPG retail and wholesale company operating in Zimbabwe. The website must support eCommerce functionality using Cart.js, and serve both residential and commercial LPG customers.
+
+🌐 Pages & Navigation (8 Tabs)
+	1.	Home
+	•	Hero image with LPG tank or urban Zimbabwe backdrop.
+	•	Headline: “Fueling Zimbabwe Safely — From Homes to Industry.”
+	•	3 Quick CTA Buttons: Order Gas, Shop Accessories, Commercial Solutions
+	•	Key stats: 2-hour delivery, 2x 25-tonne skid tanks, mobile refill trailer.
+	2.	About Us
+	•	Company history, mission, vision.
+	•	Licensed by ZERA, EMA, Bulawayo City Council.
+	•	Highlight equipment: TLB, thrust boring units, refill trailer, cylinder cages.
+	3.	Services
+	•	Retail cylinder refills (9kg, 19kg, 48kg)
+	•	Wholesale LPG supply from skid tanks
+	•	LPG tank installations (commercial and residential)
+	•	Safety audits and ZERA compliance support
+	4.	Shop Online
+	•	Integrated Cart.js for shopping cart and checkout logic.
+	•	Product cards (image, name, description, price, “Add to Cart” button).
+	•	LPG Products:
+	•	9kg Cylinder Refill – $11
+	•	19kg Cylinder Refill – $22
+	•	48kg Cylinder Purchase – $95
+	•	Empty 48kg Dual Valve Cylinder – $60
+	•	Accessories:
+	•	Regulator Set – $18
+	•	1.5m LPG Hose – $6
+	•	Conversion Kit – $25
+	•	Shopping cart modal or side panel
+	•	Basic checkout form: Name, Phone, Address, Payment Method (EcoCash, USD Cash, Bank Transfer)
+	5.	Commercial Applications
+	•	LPG for:
+	•	Bakeries & Restaurants (LPG ovens, fryers)
+	•	Dairy & Poultry Farms (boilers, heaters)
+	•	Lodges & Hotels (hot water, kitchen)
+	•	Schools, Hospitals (bulk tank setups)
+	•	Button: “Request a Free Site Visit”
+	6.	Accessories
+	•	Display popular LPG accessories with pricing and cart integration:
+	•	Hose pipes, regulators, safety valves, burners
+	•	Include safety usage tips per item
+	7.	Safety & Compliance
+	•	ZERA, EMA, and City regulations overview
+	•	Downloadable PDFs:
+	•	LPG Safety Guide
+	•	Tank Installation Guide
+	•	Cylinder Storage Checklist
+	8.	Contact Us
+	•	Embedded Google Map for Bulawayo and Harare sites
+	•	Contact form (Name, Phone, Inquiry)
+	•	WhatsApp chat link
+	•	Operating hours
+
+🔧 Technical Features
+	•	Use HTML/CSS/JavaScript as base stack
+	•	Use Cart.js to manage cart and checkout (https://cartjs.org)
+	•	Bootstrap or TailwindCSS for responsive design
+	•	Google Fonts for typography
+	•	Add WhatsApp order integration (click-to-chat link)
+	•	Basic JavaScript or Firebase form handler for order capture
+
+🎯 Key Differentiators
+	•	Fully online LPG ordering experience — unique in Zimbabwe
+	•	Commercial LPG solutions tailored for industries
+	•	Accessory store with instant checkout — hoses, regulators, etc.
+	•	Fastest 2-hour refill delivery in Bulawayo
+	•	Mobile LPG refill trailer for peri-urban service areas
+	•	Own infrastructure: 2x 25-tonne skid tanks + distribution fleet
+	•	Technical team for full installation & compliance setup
