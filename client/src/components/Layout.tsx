@@ -41,7 +41,11 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <i className="fas fa-fire text-yellow-500 text-2xl mr-2"></i>
+                <img 
+                  src="/assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png" 
+                  alt="DB Gas - Energy for Life" 
+                  className="h-10 w-auto mr-2"
+                />
                 <span className="text-xl font-bold text-primary">DB Gas</span>
               </Link>
             </div>
@@ -154,7 +158,11 @@ export function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
-              <i className="fas fa-fire text-yellow-500 text-2xl mr-2"></i>
+              <img 
+                src="/assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png" 
+                alt="DB Gas - Energy for Life" 
+                className="h-8 w-auto mr-2 filter brightness-0 invert"
+              />
               <h5 className="text-xl font-bold">DB Gas</h5>
             </div>
             <div className="text-center md:text-right">

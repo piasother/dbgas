@@ -1,5 +1,7 @@
 import { type Product } from '@shared/schema';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 interface ProductCardProps {
@@ -8,16 +10,43 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your cart and track your orders.",
+        variant: "default",
+      });
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1500);
+      return;
+    }
+
     console.log('Adding to cart:', product.name);
     setIsAdding(true);
     try {
       addItem(product);
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart.`,
+        variant: "default",
+      });
       console.log('Successfully added to cart');
     } catch (error) {
       console.error('Error adding to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
     }
     
     // Show visual feedback
@@ -48,8 +77,8 @@ export function ProductCard({ product }: ProductCardProps) {
               isAdding ? 'opacity-75 cursor-not-loading' : ''
             } ${!product.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <i className={`fas ${isAdding ? 'fa-spinner fa-spin' : 'fa-cart-plus'} mr-2`}></i>
-            {isAdding ? 'Adding...' : !product.inStock ? 'Out of Stock' : 'Add to Cart'}
+            <i className={`fas ${isAdding ? 'fa-spinner fa-spin' : isAuthenticated ? 'fa-cart-plus' : 'fa-sign-in-alt'} mr-2`}></i>
+            {isAdding ? 'Adding...' : !product.inStock ? 'Out of Stock' : isAuthenticated ? 'Add to Cart' : 'Login to Order'}
           </button>
         </div>
       </div>
