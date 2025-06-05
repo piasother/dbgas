@@ -105,9 +105,9 @@ export function Checkout() {
       paymentMethod: paymentMethod,
       phoneNumber: phoneNumber,
       email: email,
-      customerName: user && 'firstName' in user && 'lastName' in user && user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}` 
-        : (user && 'email' in user && user.email) || "Customer",
+      customerName: user && typeof user === 'object' && 'firstName' in user && 'lastName' in user && (user as any).firstName && (user as any).lastName 
+        ? `${(user as any).firstName} ${(user as any).lastName}` 
+        : (user && typeof user === 'object' && 'email' in user && (user as any).email) || "Customer",
     };
 
     createPaymentMutation.mutate(paymentData);
