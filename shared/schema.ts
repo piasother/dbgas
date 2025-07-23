@@ -123,13 +123,15 @@ export const deliveryEvents = pgTable("delivery_events", {
 // Gallery management
 export const galleryImages = pgTable("gallery_images", {
   id: serial("id").primaryKey(),
-  category: text("category").notNull(), // product, accessory, banner, gallery
+  category: text("category").notNull(), // product, accessory, banner, gallery, hero, home
   productId: integer("product_id").references(() => products.id),
   imageName: text("image_name").notNull(),
   imageUrl: text("image_url").notNull(),
   altText: text("alt_text"),
   displayOrder: integer("display_order").default(0),
   isActive: boolean("is_active").default(true),
+  fileSize: integer("file_size"), // in bytes
+  dimensions: text("dimensions"), // "width x height"
   uploadedBy: varchar("uploaded_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),

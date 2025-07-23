@@ -24,6 +24,10 @@ export function Admin() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingImage, setEditingImage] = useState<any>(null);
+  const [uploadCategory, setUploadCategory] = useState('gallery');
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [uploadAltText, setUploadAltText] = useState('');
+  const [linkingImage, setLinkingImage] = useState<any>(null);
   const [animatedStats, setAnimatedStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -193,6 +197,21 @@ export function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update image", variant: "destructive" });
+    },
+  });
+
+  // Link image to product mutation
+  const linkImageMutation = useMutation({
+    mutationFn: async ({ imageId, productId }: { imageId: number; productId: number | null }) => {
+      await apiRequest("PUT", `/api/admin/gallery-images/${imageId}/link-product`, { productId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/gallery-images'] });
+      toast({ title: "Success", description: "Image linked successfully" });
+      setLinkingImage(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to link image", variant: "destructive" });
     },
   });
 
@@ -796,12 +815,66 @@ export function Admin() {
                         </div>
                         
                         {selectedImageFile && (
-                          <div>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Image Category
+                              </label>
+                              <select 
+                                value={uploadCategory}
+                                onChange={(e) => setUploadCategory(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              >
+                                <option value="gallery">General Gallery</option>
+                                <option value="product">Product Image</option>
+                                <option value="accessory">Accessory Image</option>
+                                <option value="hero">Hero/Banner Image</option>
+                                <option value="home">Home Page Image</option>
+                              </select>
+                            </div>
+                            
+                            {(uploadCategory === 'product' || uploadCategory === 'accessory') && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Link to Product
+                                </label>
+                                <select
+                                  value={selectedProductId}
+                                  onChange={(e) => setSelectedProductId(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                >
+                                  <option value="">Select a product...</option>
+                                  {products.map((product) => (
+                                    <option key={product.id} value={product.id}>
+                                      {product.name} - {product.category}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Alt Text (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={uploadAltText}
+                                onChange={(e) => setUploadAltText(e.target.value)}
+                                placeholder="Describe the image for accessibility"
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            
                             <button
                               onClick={() => {
                                 const formData = new FormData();
                                 formData.append('image', selectedImageFile);
-                                formData.append('category', 'product');
+                                formData.append('category', uploadCategory);
+                                formData.append('altText', uploadAltText);
+                                if (selectedProductId) {
+                                  formData.append('productId', selectedProductId);
+                                }
                                 uploadImageMutation.mutate(formData);
                               }}
                               disabled={uploadImageMutation.isPending}
@@ -899,19 +972,56 @@ export function Admin() {
                         <div className="p-4">
                           <p className="font-medium truncate">{image.imageName}</p>
                           <p className="text-sm text-gray-600">{image.category}</p>
-                          <div className="mt-2 flex space-x-2">
-                            <button
-                              onClick={() => setEditingImage({ 
-                                type: 'gallery', 
-                                imageId: image.id,
-                                current: image.imageUrl,
-                                title: image.imageName
-                              })}
-                              className="text-sm text-primary hover:text-blue-700"
-                            >
-                              <i className="fas fa-edit mr-1"></i>
-                              Edit
-                            </button>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => setEditingImage({ 
+                                  type: 'gallery', 
+                                  imageId: image.id,
+                                  current: image.imageUrl,
+                                  title: image.imageName
+                                })}
+                                className="text-sm text-primary hover:text-blue-700"
+                              >
+                                <i className="fas fa-edit mr-1"></i>
+                                Edit
+                              </button>
+                              
+                              {!image.productId && (
+                                <button
+                                  onClick={() => setLinkingImage({ 
+                                    imageId: image.id, 
+                                    imageName: image.imageName 
+                                  })}
+                                  className="text-sm text-green-600 hover:text-green-700"
+                                >
+                                  <i className="fas fa-link mr-1"></i>
+                                  Link to Product
+                                </button>
+                              )}
+                              
+                              {image.productId && (
+                                <button
+                                  onClick={() => {
+                                    linkImageMutation.mutate({ 
+                                      imageId: image.id, 
+                                      productId: null 
+                                    });
+                                  }}
+                                  className="text-sm text-orange-600 hover:text-orange-700"
+                                >
+                                  <i className="fas fa-unlink mr-1"></i>
+                                  Unlink
+                                </button>
+                              )}
+                            </div>
+                            
+                            {image.productId && (
+                              <p className="text-xs text-green-600">
+                                <i className="fas fa-box mr-1"></i>
+                                Linked to: {products.find(p => p.id === image.productId)?.name || 'Unknown Product'}
+                              </p>
+                            )}
                             <button
                               onClick={() => {
                                 updateGalleryImageMutation.mutate({ 
@@ -932,6 +1042,64 @@ export function Admin() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Product Linking Modal */}
+                  {linkingImage && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4">
+                        <h3 className="text-lg font-semibold mb-4">Link Image to Product</h3>
+                        <p className="text-gray-600 mb-4">
+                          Link "{linkingImage.imageName}" to a product
+                        </p>
+                        
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.target as HTMLFormElement);
+                          const productId = formData.get('productId') as string;
+                          
+                          linkImageMutation.mutate({ 
+                            imageId: linkingImage.imageId, 
+                            productId: productId ? parseInt(productId) : null 
+                          });
+                        }}>
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Select Product
+                            </label>
+                            <select
+                              name="productId"
+                              required
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                            >
+                              <option value="">Choose a product...</option>
+                              {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                  {product.name} ({product.category})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              type="button"
+                              onClick={() => setLinkingImage(null)}
+                              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700"
+                              disabled={linkImageMutation.isPending}
+                            >
+                              {linkImageMutation.isPending ? 'Linking...' : 'Link to Product'}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Image Edit Modal */}
                   {editingImage && (

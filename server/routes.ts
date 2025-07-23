@@ -5,6 +5,9 @@ import { insertInquirySchema, insertOrderSchema, insertInventoryMovementSchema }
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 import { Paynow } from "paynow";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 // Admin middleware to check if user is admin (andrewsbulle@gmail.com)
 const isAdmin = async (req: any, res: any, next: any) => {
@@ -19,6 +22,39 @@ const isAdmin = async (req: any, res: any, next: any) => {
   
   next();
 };
+
+// Configure multer for file uploads
+const storage_config = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(process.cwd(), 'client', 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'img-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage_config,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -568,17 +604,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/gallery/upload", isAdmin, async (req, res) => {
+  // Upload new image to gallery (admin only)
+  app.post("/api/admin/gallery/upload", isAdmin, upload.single('image'), async (req: any, res) => {
     try {
-      // This is a placeholder for file upload functionality
-      // In a real implementation, you'd use multer or similar for file handling
-      res.json({ 
-        success: true, 
-        message: "File upload endpoint - would need multer implementation" 
-      });
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      const { category, altText, productId, imageName } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Create gallery image record
+      const imageData = {
+        category: category || 'gallery',
+        productId: productId ? parseInt(productId) : null,
+        imageName: imageName || req.file.originalname,
+        imageUrl: `/uploads/${req.file.filename}`,
+        altText: altText || '',
+        fileSize: req.file.size,
+        uploadedBy: userId,
+        isActive: true
+      };
+
+      const galleryImage = await storage.createGalleryImage(imageData);
+      res.status(201).json(galleryImage);
     } catch (error) {
       console.error("Error uploading image:", error);
       res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Link existing gallery image to product (admin only)
+  app.put("/api/admin/gallery-images/:id/link-product", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { productId } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid gallery image ID" });
+      }
+
+      const updated = await storage.updateGalleryImage(id, { 
+        productId: productId ? parseInt(productId) : null,
+        category: productId ? 'product' : 'gallery'
+      });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error linking image to product:", error);
+      res.status(500).json({ error: "Failed to link image to product" });
     }
   });
 
@@ -643,6 +716,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching user's previous orders:", error);
       res.status(500).json({ error: "Failed to fetch previous orders" });
     }
+  });
+
+  // Serve static images and uploads
+  app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(process.cwd(), 'client', 'public', 'uploads', req.path);
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        res.status(404).json({ error: 'File not found' });
+      }
+    });
   });
 
   const httpServer = createServer(app);
