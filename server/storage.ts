@@ -113,7 +113,7 @@ export class DatabaseStorage implements IStorage {
         description: "Perfect for small households and apartments. Clean burning and efficient.",
         price: 1100, // $11.00 in cents
         category: "lpg",
-        image: "/api/static/images/lpg-9kg-cylinder-zim.jpg",
+        image: "/images/lpg-9kg-cylinder.svg",
         badge: "ZERA Approved",
         inStock: true,
         stockQuantity: 150,
@@ -127,7 +127,7 @@ export class DatabaseStorage implements IStorage {
         description: "Ideal for families and medium-sized businesses. Long-lasting supply.",
         price: 2200, // $22.00 in cents
         category: "lpg",
-        image: "/api/static/images/lpg-19kg-cylinder-zim.jpg",
+        image: "/images/lpg-19kg-cylinder.svg",
         badge: "Most Popular",
         inStock: true,
         stockQuantity: 85,
@@ -141,7 +141,7 @@ export class DatabaseStorage implements IStorage {
         description: "Heavy-duty cylinder for commercial use. Includes safety features.",
         price: 9500, // $95.00 in cents
         category: "lpg",
-        image: "/api/static/images/lpg-48kg-cylinder-commercial-zim.jpg",
+        image: "/images/lpg-48kg-cylinder.svg",
         badge: "Commercial Grade",
         inStock: true,
         stockQuantity: 25,
@@ -155,7 +155,7 @@ export class DatabaseStorage implements IStorage {
         description: "Professional-grade empty cylinder with dual valve system for safety.",
         price: 6000, // $60.00 in cents
         category: "lpg",
-        image: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/images/lpg-48kg-empty-cylinder.svg",
         badge: "Dual Valve",
         inStock: true,
         stockQuantity: 12,

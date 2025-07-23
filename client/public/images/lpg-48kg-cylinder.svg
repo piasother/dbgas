@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 800" width="450" height="800">
+  <!-- 48kg Commercial LPG Cylinder -->
+  <defs>
+    <linearGradient id="cylinderGradient48" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e6e6e6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#cccccc;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="valveGradient48" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a5490;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="450" height="800" fill="#f8fafc"/>
+  
+  <!-- Cylinder Body - Much Larger for 48kg Commercial -->
+  <ellipse cx="225" cy="720" rx="110" ry="22" fill="#d1d5db"/>
+  <rect x="115" y="150" width="220" height="570" fill="url(#cylinderGradient48)" stroke="#9ca3af" stroke-width="3"/>
+  <ellipse cx="225" cy="150" rx="110" ry="22" fill="url(#cylinderGradient48)" stroke="#9ca3af" stroke-width="3"/>
+  
+  <!-- Dual Valve Assembly -->
+  <rect x="200" y="110" width="50" height="40" fill="url(#valveGradient48)" stroke="#1e40af" stroke-width="2"/>
+  <circle cx="215" cy="130" r="12" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+  <circle cx="235" cy="130" r="12" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+  
+  <!-- Commercial Handle -->
+  <rect x="190" y="85" width="70" height="12" rx="6" fill="#374151"/>
+  <rect x="185" y="78" width="12" height="25" rx="6" fill="#374151"/>
+  <rect x="253" y="78" width="12" height="25" rx="6" fill="#374151"/>
+  
+  <!-- Safety Label -->
+  <rect x="145" y="200" width="160" height="80" fill="#dc2626" rx="8"/>
+  <text x="225" y="225" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">DANGER</text>
+  <text x="225" y="250" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">COMMERCIAL GRADE</text>
+  <text x="225" y="270" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">LPG 48KG</text>
+  
+  <!-- Commercial Grade Badge -->
+  <rect x="320" y="60" width="80" height="40" fill="#7c3aed" stroke="#5b21b6" stroke-width="3" rx="20"/>
+  <text x="360" y="78" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9" font-weight="bold">COMMERCIAL</text>
+  <text x="360" y="90" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9" font-weight="bold">GRADE</text>
+  
+  <!-- Weight indicators -->
+  <text x="225" y="420" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="28" font-weight="bold">48KG</text>
+  <text x="225" y="450" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="16">NET WEIGHT</text>
+  
+  <!-- Brand -->
+  <text x="225" y="550" text-anchor="middle" fill="#1f2937" font-family="Arial, sans-serif" font-size="24" font-weight="bold">DB GAS</text>
+  <text x="225" y="580" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="16">ZIMBABWE</text>
+  
+  <!-- Commercial Use Indicator -->
+  <text x="225" y="620" text-anchor="middle" fill="#7c3aed" font-family="Arial, sans-serif" font-size="14" font-weight="bold">COMMERCIAL USE</text>
+  <text x="225" y="640" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="12">RESTAURANTS • HOTELS • INDUSTRY</text>
+  
+  <!-- Safety Features -->
+  <rect x="145" y="320" width="160" height="60" fill="#059669" rx="5"/>
+  <text x="225" y="340" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">DUAL VALVE SYSTEM</text>
+  <text x="225" y="355" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Enhanced Safety Features</text>
+  <text x="225" y="370" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Pressure Relief Valve</text>
+</svg>
