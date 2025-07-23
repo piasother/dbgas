@@ -49,7 +49,36 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("user"), // 'admin' or 'user'
+  status: varchar("status").default("active"), // 'active', 'suspended', 'deleted'
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin settings for site configuration
+export const adminSettings = pgTable("admin_settings", {
+  id: serial("id").primaryKey(),
+  settingKey: varchar("setting_key").unique().notNull(),
+  settingValue: text("setting_value"),
+  settingType: varchar("setting_type").notNull(), // 'text', 'email', 'boolean', 'json'
+  description: text("description"),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Email configuration
+export const emailSettings = pgTable("email_settings", {
+  id: serial("id").primaryKey(),
+  smtpHost: varchar("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpUser: varchar("smtp_user"),
+  smtpPassword: varchar("smtp_password"),
+  fromEmail: varchar("from_email"),
+  fromName: varchar("from_name"),
+  contactFormRecipient: varchar("contact_form_recipient"),
+  orderNotificationEmail: varchar("order_notification_email"),
+  isActive: boolean("is_active").default(true),
+  updatedBy: varchar("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -143,3 +172,7 @@ export type InventoryMovement = typeof inventoryMovements.$inferSelect;
 export type InsertInventoryMovement = z.infer<typeof insertInventoryMovementSchema>;
 export type StockAlert = typeof stockAlerts.$inferSelect;
 export type InsertStockAlert = z.infer<typeof insertStockAlertSchema>;
+export type AdminSetting = typeof adminSettings.$inferSelect;
+export type InsertAdminSetting = typeof adminSettings.$inferInsert;
+export type EmailSetting = typeof emailSettings.$inferSelect;
+export type InsertEmailSetting = typeof emailSettings.$inferInsert;

@@ -5,6 +5,7 @@ import {
   orders,
   inventoryMovements,
   stockAlerts,
+  emailSettings,
   type User,
   type UpsertUser,
   type Product, 
@@ -16,7 +17,9 @@ import {
   type InventoryMovement,
   type InsertInventoryMovement,
   type StockAlert,
-  type InsertStockAlert
+  type InsertStockAlert,
+  type EmailSetting,
+  type InsertEmailSetting
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, lt, and } from "drizzle-orm";
@@ -25,6 +28,8 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUserStatus(userId: string, status: string): Promise<User>;
   
   // Products
   getProducts(): Promise<Product[]>;
@@ -48,6 +53,10 @@ export interface IStorage {
   getActiveStockAlerts(): Promise<StockAlert[]>;
   acknowledgeStockAlert(alertId: number, userId: string): Promise<StockAlert>;
   adjustStock(productId: number, quantity: number, reason: string, userId?: string, notes?: string): Promise<void>;
+  
+  // Admin operations
+  getEmailSettings(): Promise<EmailSetting | undefined>;
+  updateEmailSettings(settings: any, userId: string): Promise<EmailSetting>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -355,6 +364,55 @@ export class DatabaseStorage implements IStorage {
       userId,
       notes,
     });
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserStatus(userId: string, status: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        status: status as any,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getEmailSettings(): Promise<EmailSetting | undefined> {
+    const [settings] = await db.select().from(emailSettings).limit(1);
+    return settings || undefined;
+  }
+
+  async updateEmailSettings(settingsData: any, userId: string): Promise<EmailSetting> {
+    const existing = await this.getEmailSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(emailSettings)
+        .set({
+          ...settingsData,
+          updatedBy: userId,
+          updatedAt: new Date()
+        })
+        .where(eq(emailSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(emailSettings)
+        .values({
+          ...settingsData,
+          updatedBy: userId,
+          updatedAt: new Date()
+        })
+        .returning();
+      return created;
+    }
   }
 }
 

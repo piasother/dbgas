@@ -79,6 +79,14 @@ export function Layout({ children }: LayoutProps) {
                           Inventory
                         </Button>
                       </Link>
+                      {(user as any)?.role === 'admin' && (
+                        <Link href="/admin">
+                          <Button variant="outline" size="sm" className="flex items-center gap-2 border-red-200 text-red-700 hover:bg-red-50">
+                            <i className="fas fa-shield-alt h-4 w-4"></i>
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm"

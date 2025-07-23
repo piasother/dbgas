@@ -10,6 +10,7 @@ import { Checkout } from "@/pages/Checkout";
 import { SafetyGuide } from "@/pages/SafetyGuide";
 import { InstallationGuide } from "@/pages/InstallationGuide";
 import { StorageChecklist } from "@/pages/StorageChecklist";
+import { Admin } from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/safety-guide" component={SafetyGuide} />
       <Route path="/installation-guide" component={InstallationGuide} />
       <Route path="/storage-checklist" component={StorageChecklist} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

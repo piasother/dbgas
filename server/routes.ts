@@ -6,6 +6,24 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 import { Paynow } from "paynow";
 
+// Admin middleware to check if user is admin
+const isAdmin = async (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  try {
+    const userId = req.user.claims.sub;
+    const user = await storage.getUser(userId);
+    if (!user || (user as any).role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -372,6 +390,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("PayNow webhook error:", error);
       res.status(500).send("Error");
+    }
+  });
+
+  // Admin API Routes
+  // Get all users (admin only)
+  app.get("/api/admin/users", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // Update user status (admin only)
+  app.patch("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { status } = req.body;
+      
+      if (!['active', 'suspended', 'deleted'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const user = await storage.updateUserStatus(userId, status);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  });
+
+  // Get all orders (admin only)
+  app.get("/api/admin/orders", isAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  // Get all products (admin only)
+  app.get("/api/admin/products", isAdmin, async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  // Get email settings (admin only)
+  app.get("/api/admin/email-settings", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching email settings:", error);
+      res.status(500).json({ error: "Failed to fetch email settings" });
+    }
+  });
+
+  // Update email settings (admin only)
+  app.put("/api/admin/email-settings", isAdmin, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.updateEmailSettings(req.body, userId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating email settings:", error);
+      res.status(500).json({ error: "Failed to update email settings" });
     }
   });
 
