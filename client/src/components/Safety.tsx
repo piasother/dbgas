@@ -25,9 +25,9 @@ export function Safety() {
   ];
 
   const resources = [
-    { name: "LPG Safety Guide", link: "#" },
-    { name: "Installation Guide", link: "#" },
-    { name: "Storage Checklist", link: "#" }
+    { name: "LPG Safety Guide", link: "/safety-guide" },
+    { name: "Installation Guide", link: "/installation-guide" },
+    { name: "Storage Checklist", link: "/storage-checklist" }
   ];
 
   return (

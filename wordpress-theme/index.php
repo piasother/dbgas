@@ -418,22 +418,17 @@ get_header(); ?>
                     <h2 style="color: var(--white); margin-bottom: 2rem;">Get in Touch</h2>
                     
                     <div class="contact-info">
-                        <div class="contact-item">
+                        <div class="contact-item" style="text-align: center;">
                             <h5><i class="fas fa-map-marker-alt" style="color: var(--primary-color); margin-right: 0.75rem;"></i>Bulawayo Office</h5>
-                            <p>123 Industrial Road<br>Kelvin North, Bulawayo</p>
-                            <p><strong>Hours:</strong> Mon-Fri 8AM-5PM, Sat 8AM-1PM</p>
-                        </div>
-                        <div class="contact-item">
-                            <h5><i class="fas fa-map-marker-alt" style="color: var(--primary-color); margin-right: 0.75rem;"></i>Harare Office</h5>
-                            <p>456 Enterprise Drive<br>Msasa, Harare</p>
-                            <p><strong>Hours:</strong> Mon-Fri 8AM-5PM, Sat 8AM-1PM</p>
+                            <p>Stand 12142A, Ascot Township<br>Ascot Shopping Centre, Bulawayo</p>
+                            <p><strong>Hours:</strong> Mon-Fri 8AM-6PM, Sun 8AM-1PM<br>Closed on Saturday</p>
                         </div>
                     </div>
                     
                     <div class="feature-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 2rem;">
                         <div>
                             <h6 style="color: var(--white); margin-bottom: 0.5rem;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i>Emergency</h6>
-                            <p style="color: rgba(255,255,255,0.9);">+263 77 123 4567</p>
+                            <p style="color: rgba(255,255,255,0.9);">0713314920</p>
                         </div>
                         <div>
                             <h6 style="color: var(--white); margin-bottom: 0.5rem;"><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i>Email</h6>
@@ -441,7 +436,7 @@ get_header(); ?>
                         </div>
                         <div>
                             <h6 style="color: var(--white); margin-bottom: 0.5rem;"><i class="fab fa-whatsapp" style="margin-right: 0.5rem;"></i>WhatsApp</h6>
-                            <p style="color: rgba(255,255,255,0.9);">+263 77 123 4567</p>
+                            <p style="color: rgba(255,255,255,0.9);">0713314920</p>
                         </div>
                     </div>
                 </div>

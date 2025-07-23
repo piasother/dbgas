@@ -7,6 +7,9 @@ import { Home } from "@/pages/Home";
 import { Account } from "@/pages/Account";
 import { Inventory } from "@/pages/Inventory";
 import { Checkout } from "@/pages/Checkout";
+import { SafetyGuide } from "@/pages/SafetyGuide";
+import { InstallationGuide } from "@/pages/InstallationGuide";
+import { StorageChecklist } from "@/pages/StorageChecklist";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +19,9 @@ function Router() {
       <Route path="/account" component={Account} />
       <Route path="/inventory" component={Inventory} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/safety-guide" component={SafetyGuide} />
+      <Route path="/installation-guide" component={InstallationGuide} />
+      <Route path="/storage-checklist" component={StorageChecklist} />
       <Route component={NotFound} />
     </Switch>
   );

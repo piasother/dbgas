@@ -59,23 +59,14 @@ export function Contact() {
           <div className="lg:col-span-2 space-y-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-8">Get in Touch</h2>
             
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white text-gray-800 rounded-lg p-6">
+            <div className="flex justify-center">
+              <div className="bg-white text-gray-800 rounded-lg p-6 max-w-md">
                 <h5 className="flex items-center text-lg font-semibold mb-4">
                   <i className="fas fa-map-marker-alt text-primary mr-3"></i>
                   Bulawayo Office
                 </h5>
-                <p className="mb-2">123 Industrial Road<br/>Kelvin North, Bulawayo</p>
-                <p><strong>Hours:</strong> Mon-Fri 8AM-5PM, Sat 8AM-1PM</p>
-              </div>
-              
-              <div className="bg-white text-gray-800 rounded-lg p-6">
-                <h5 className="flex items-center text-lg font-semibold mb-4">
-                  <i className="fas fa-map-marker-alt text-primary mr-3"></i>
-                  Harare Office
-                </h5>
-                <p className="mb-2">456 Enterprise Drive<br/>Msasa, Harare</p>
-                <p><strong>Hours:</strong> Mon-Fri 8AM-5PM, Sat 8AM-1PM</p>
+                <p className="mb-2">Stand 12142A, Ascot Township<br/>Ascot Shopping Centre, Bulawayo</p>
+                <p><strong>Hours:</strong> Mon-Fri 8AM-6PM, Sun 8AM-1PM<br/>Closed on Saturday</p>
               </div>
             </div>
             
@@ -84,7 +75,7 @@ export function Contact() {
                 <h6 className="flex items-center font-semibold mb-2">
                   <i className="fas fa-phone mr-3"></i>Emergency
                 </h6>
-                <p>+263 77 123 4567</p>
+                <p>0713314920</p>
               </div>
               <div>
                 <h6 className="flex items-center font-semibold mb-2">
@@ -96,7 +87,7 @@ export function Contact() {
                 <h6 className="flex items-center font-semibold mb-2">
                   <i className="fab fa-whatsapp mr-3"></i>WhatsApp
                 </h6>
-                <p>+263 77 123 4567</p>
+                <p>0713314920</p>
               </div>
             </div>
           </div>

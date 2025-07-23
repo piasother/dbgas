@@ -255,7 +255,7 @@ export function Cart({ isOpen, onClose }: CartProps) {
                 <p className="text-sm mb-3"><i className="fas fa-phone mr-2"></i>24/7 support</p>
                 
                 <a 
-                  href="https://wa.me/263771234567" 
+                  href="https://wa.me/263713314920" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold inline-flex items-center w-full justify-center"
