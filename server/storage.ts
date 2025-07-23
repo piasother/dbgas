@@ -6,6 +6,8 @@ import {
   inventoryMovements,
   stockAlerts,
   emailSettings,
+  deliveryEvents,
+  galleryImages,
   type User,
   type UpsertUser,
   type Product, 
@@ -19,7 +21,11 @@ import {
   type StockAlert,
   type InsertStockAlert,
   type EmailSetting,
-  type InsertEmailSetting
+  type InsertEmailSetting,
+  type DeliveryEvent,
+  type InsertDeliveryEvent,
+  type GalleryImage,
+  type InsertGalleryImage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, lt, and } from "drizzle-orm";
@@ -57,6 +63,21 @@ export interface IStorage {
   // Admin operations
   getEmailSettings(): Promise<EmailSetting | undefined>;
   updateEmailSettings(settings: any, userId: string): Promise<EmailSetting>;
+  
+  // Delivery tracking
+  updateOrderDeliveryStatus(orderId: number, status: string, trackingNumber?: string, estimatedDelivery?: Date): Promise<Order>;
+  createDeliveryEvent(event: InsertDeliveryEvent): Promise<DeliveryEvent>;
+  getDeliveryEvents(orderId: number): Promise<DeliveryEvent[]>;
+  
+  // Gallery management
+  getGalleryImages(category?: string): Promise<GalleryImage[]>;
+  createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
+  updateGalleryImage(id: number, updates: Partial<GalleryImage>): Promise<GalleryImage>;
+  deleteGalleryImage(id: number): Promise<void>;
+  
+  // Enhanced product features
+  getProductsByStockStatus(): Promise<{ inStock: Product[], lowStock: Product[], outOfStock: Product[] }>;
+  getUserPreviousOrders(userId: string): Promise<Order[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -413,6 +434,113 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // Delivery tracking methods
+  async updateOrderDeliveryStatus(orderId: number, status: string, trackingNumber?: string, estimatedDelivery?: Date): Promise<Order> {
+    const updateData: any = { 
+      deliveryStatus: status,
+      updatedAt: new Date() 
+    };
+    
+    if (trackingNumber) updateData.trackingNumber = trackingNumber;
+    if (estimatedDelivery) updateData.estimatedDelivery = estimatedDelivery;
+    if (status === 'delivered') updateData.actualDelivery = new Date();
+    
+    const [order] = await db
+      .update(orders)
+      .set(updateData)
+      .where(eq(orders.id, orderId))
+      .returning();
+    return order;
+  }
+
+  async createDeliveryEvent(event: InsertDeliveryEvent): Promise<DeliveryEvent> {
+    const [created] = await db
+      .insert(deliveryEvents)
+      .values(event)
+      .returning();
+    return created;
+  }
+
+  async getDeliveryEvents(orderId: number): Promise<DeliveryEvent[]> {
+    return await db
+      .select()
+      .from(deliveryEvents)
+      .where(eq(deliveryEvents.orderId, orderId))
+      .orderBy(desc(deliveryEvents.eventTimestamp));
+  }
+
+  // Gallery management methods
+  async getGalleryImages(category?: string): Promise<GalleryImage[]> {
+    if (category) {
+      return await db
+        .select()
+        .from(galleryImages)
+        .where(and(
+          eq(galleryImages.category, category),
+          eq(galleryImages.isActive, true)
+        ))
+        .orderBy(galleryImages.displayOrder);
+    }
+    return await db
+      .select()
+      .from(galleryImages)
+      .where(eq(galleryImages.isActive, true))
+      .orderBy(galleryImages.displayOrder);
+  }
+
+  async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
+    const [created] = await db
+      .insert(galleryImages)
+      .values(image)
+      .returning();
+    return created;
+  }
+
+  async updateGalleryImage(id: number, updates: Partial<GalleryImage>): Promise<GalleryImage> {
+    const [updated] = await db
+      .update(galleryImages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(galleryImages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteGalleryImage(id: number): Promise<void> {
+    await db
+      .update(galleryImages)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(galleryImages.id, id));
+  }
+
+  // Enhanced product features
+  async getProductsByStockStatus(): Promise<{ inStock: Product[], lowStock: Product[], outOfStock: Product[] }> {
+    const allProducts = await this.getProducts();
+    
+    const inStock = allProducts.filter(p => p.stockQuantity > p.lowStockThreshold);
+    const lowStock = allProducts.filter(p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold);
+    const outOfStock = allProducts.filter(p => p.stockQuantity === 0);
+    
+    return { inStock, lowStock, outOfStock };
+  }
+
+  async getUserPreviousOrders(userId: string): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .where(and(
+        eq(orders.userId, userId),
+        eq(orders.status, 'completed')
+      ))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  // User orders for reorder functionality
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return await db.select().from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
   }
 }
 

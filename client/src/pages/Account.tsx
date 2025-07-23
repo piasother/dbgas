@@ -1,18 +1,22 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User as UserIcon, Package, Calendar, Phone, MapPin, CreditCard } from "lucide-react";
+import { User as UserIcon, Package, Calendar, Phone, MapPin, CreditCard, ShoppingCart, RefreshCw } from "lucide-react";
 import type { Order, User as UserType } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useCart } from "@/hooks/useCart";
 
 export function Account() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { addItem } = useCart();
+  const queryClient = useQueryClient();
   
   // Type the user data properly
   const userData = user as UserType;
@@ -36,6 +40,33 @@ export function Account() {
     queryKey: ["/api/my-orders"],
     enabled: isAuthenticated,
     retry: false,
+  });
+
+  // Reorder mutation - simpler approach using order info directly from orders array
+  const reorderMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      const ordersArray = Array.isArray(orders) ? orders : [];
+      const order = ordersArray.find((o: Order) => o.id === orderId);
+      if (!order) throw new Error('Order not found');
+      
+      const items = JSON.parse(order.items);
+      items.forEach((item: any) => {
+        addItem(item.product, item.quantity);
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Items have been added to your cart!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reorder items",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading || !isAuthenticated) {
@@ -190,8 +221,21 @@ export function Account() {
                             
                             <div className="text-right">
                               <p className="text-2xl font-bold text-green-600">
-                                ${(order.totalAmount / 100).toFixed(2)}
+                                ${((order.totalAmount || order.total || 0) / 100).toFixed(2)}
                               </p>
+                              {/* One-Click Reorder Button */}
+                              {(order.status === 'delivered' || order.status === 'confirmed') && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => reorderMutation.mutate(order.id)}
+                                  disabled={reorderMutation.isPending}
+                                  className="mt-2"
+                                >
+                                  <RefreshCw className={`h-4 w-4 mr-2 ${reorderMutation.isPending ? 'animate-spin' : ''}`} />
+                                  {reorderMutation.isPending ? 'Adding...' : 'Reorder'}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>

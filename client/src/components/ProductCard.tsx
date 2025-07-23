@@ -68,17 +68,53 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
         <h5 className="text-xl font-semibold mb-3">{product.name}</h5>
         <p className="text-gray-600 mb-4">{product.description}</p>
+        
+        {/* Dynamic Stock Indicator */}
+        <div className="mb-4">
+          {product.stockQuantity > 0 ? (
+            <div className="flex items-center space-x-2">
+              {product.stockQuantity <= product.lowStockThreshold ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  <span className="text-sm text-yellow-600 font-medium">
+                    Low Stock: {product.stockQuantity} left
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-sm text-green-600 font-medium">
+                    In Stock ({product.stockQuantity} available)
+                  </span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="text-sm text-red-600 font-medium">
+                Out of Stock
+                {(product as any).leadTime > 0 && (
+                  <span className="text-gray-500 ml-1">
+                    (Lead time: {(product as any).leadTime} days)
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+        
         <div className="flex justify-between items-center">
           <span className="price-tag">${(product.price / 100).toFixed(2)}</span>
           <button 
             onClick={handleAddToCart}
-            disabled={isAdding || !product.inStock}
+            disabled={isAdding || product.stockQuantity === 0}
             className={`btn-primary px-4 py-2 rounded-lg font-semibold inline-flex items-center ${
               isAdding ? 'opacity-75 cursor-not-loading' : ''
-            } ${!product.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${product.stockQuantity === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <i className={`fas ${isAdding ? 'fa-spinner fa-spin' : isAuthenticated ? 'fa-cart-plus' : 'fa-sign-in-alt'} mr-2`}></i>
-            {isAdding ? 'Adding...' : !product.inStock ? 'Out of Stock' : isAuthenticated ? 'Add to Cart' : 'Login to Order'}
+            {isAdding ? 'Adding...' : product.stockQuantity === 0 ? 'Out of Stock' : isAuthenticated ? 'Add to Cart' : 'Login to Order'}
           </button>
         </div>
       </div>

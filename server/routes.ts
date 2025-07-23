@@ -297,6 +297,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         const order = await storage.createOrder(orderData);
+        
+        // Create initial delivery event
+        try {
+          await storage.createDeliveryEvent({
+            orderId: order.id,
+            eventType: 'pending',
+            eventDescription: 'Order placed and awaiting payment confirmation',
+            createdBy: userId
+          });
+        } catch (error) {
+          console.error("Error creating delivery event:", error);
+        }
 
         res.json({
           success: true,
@@ -335,23 +347,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (order) {
           await storage.updateOrderStatus(order.id, 'confirmed');
           
-          // Update inventory for paid orders
+          // Update inventory for paid orders and trigger delivery tracking
           const orderItems = JSON.parse(order.items || '[]');
           for (const item of orderItems) {
-            const product = await storage.getProduct(item.productId);
-            if (product) {
-              const newStock = Math.max(0, product.stockQuantity - item.quantity);
-              await storage.updateProductStock(item.productId, newStock);
-              
-              // Create inventory movement
-              await storage.createInventoryMovement({
-                productId: item.productId,
-                movementType: 'sale',
-                quantity: -item.quantity,
-                reason: 'order_fulfillment',
-                notes: `Order #${order.id} - PayNow payment`
-              });
+            try {
+              // Use the new adjustStock method which handles both stock update and inventory movement
+              await storage.adjustStock(
+                item.product.id,
+                -item.quantity,
+                'sale',
+                order.userId,
+                `Order #${order.id} - ${item.product.name} (PayNow payment confirmed)`
+              );
+            } catch (error) {
+              console.error(`Error adjusting stock for product ${item.product.id}:`, error);
             }
+          }
+          
+          // Create delivery tracking event for confirmed payment
+          try {
+            await storage.createDeliveryEvent({
+              orderId: order.id,
+              eventType: 'confirmed',
+              eventDescription: 'Payment confirmed - Order ready for pickup/delivery',
+              createdBy: order.userId
+            });
+          } catch (error) {
+            console.error("Error creating delivery event:", error);
           }
         }
         
@@ -465,6 +487,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating email settings:", error);
       res.status(500).json({ error: "Failed to update email settings" });
+    }
+  });
+
+  // Delivery tracking routes (admin only)
+  app.patch("/api/admin/orders/:id/delivery", isAdmin, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { deliveryStatus, trackingNumber } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (isNaN(orderId)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      const order = await storage.updateOrderDeliveryStatus(orderId, deliveryStatus, trackingNumber);
+      
+      // Create delivery event
+      await storage.createDeliveryEvent({
+        orderId,
+        eventType: deliveryStatus,
+        eventDescription: `Order status updated to ${deliveryStatus}`,
+        createdBy: userId
+      });
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating delivery status:", error);
+      res.status(500).json({ error: "Failed to update delivery status" });
+    }
+  });
+
+  app.get("/api/admin/delivery-events/:orderId", isAdmin, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      const events = await storage.getDeliveryEvents(orderId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching delivery events:", error);
+      res.status(500).json({ error: "Failed to fetch delivery events" });
+    }
+  });
+
+  // Stock management routes (admin only)
+  app.get("/api/admin/stock-status", isAdmin, async (req, res) => {
+    try {
+      const stockStatus = await storage.getProductsByStockStatus();
+      res.json(stockStatus);
+    } catch (error) {
+      console.error("Error fetching stock status:", error);
+      res.status(500).json({ error: "Failed to fetch stock status" });
+    }
+  });
+
+  // Gallery management routes (admin only)
+  app.get("/api/admin/gallery-images", isAdmin, async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      const images = await storage.getGalleryImages(category);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching gallery images:", error);
+      res.status(500).json({ error: "Failed to fetch gallery images" });
+    }
+  });
+
+  app.post("/api/admin/gallery/upload", isAdmin, async (req, res) => {
+    try {
+      // This is a placeholder for file upload functionality
+      // In a real implementation, you'd use multer or similar for file handling
+      res.json({ 
+        success: true, 
+        message: "File upload endpoint - would need multer implementation" 
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Previous orders for reordering (authenticated users)
+  app.get("/api/user/previous-orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const orders = await storage.getUserPreviousOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching previous orders:", error);
+      res.status(500).json({ error: "Failed to fetch previous orders" });
+    }
+  });
+
+  // Get user's previous orders for reorder functionality
+  app.get("/api/user/previous-orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const orders = await storage.getUserOrders(userId);
+      
+      // Return only delivered orders for reorder functionality
+      const deliveredOrders = orders.filter(order => 
+        order.status === 'delivered' || order.status === 'confirmed'
+      );
+      
+      res.json(deliveredOrders);
+    } catch (error) {
+      console.error("Error fetching user's previous orders:", error);
+      res.status(500).json({ error: "Failed to fetch previous orders" });
     }
   });
 

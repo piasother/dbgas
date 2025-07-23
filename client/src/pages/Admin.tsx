@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import type { User, AdminSetting, EmailSetting, Order, Product } from "@shared/schema";
+import type { User, AdminSetting, EmailSetting, Order, Product, DeliveryEvent, GalleryImage } from "@shared/schema";
 
 export function Admin() {
   const { user, isLoading: authLoading } = useAuth();
@@ -17,6 +17,10 @@ export function Admin() {
     contactFormRecipient: '',
     orderNotificationEmail: ''
   });
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [deliveryStatus, setDeliveryStatus] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -48,6 +52,21 @@ export function Admin() {
 
   const { data: emailSettings } = useQuery<EmailSetting>({
     queryKey: ['/api/admin/email-settings'],
+    enabled: (user as any)?.role === 'admin',
+  });
+
+  const { data: deliveryEvents = [] } = useQuery<DeliveryEvent[]>({
+    queryKey: ['/api/admin/delivery-events', selectedOrder?.id],
+    enabled: (user as any)?.role === 'admin' && !!selectedOrder,
+  });
+
+  const { data: galleryImages = [] } = useQuery<GalleryImage[]>({
+    queryKey: ['/api/admin/gallery-images'],
+    enabled: (user as any)?.role === 'admin',
+  });
+
+  const { data: stockStatus } = useQuery<{inStock: Product[], lowStock: Product[], outOfStock: Product[]}>({
+    queryKey: ['/api/admin/stock-status'],
     enabled: (user as any)?.role === 'admin',
   });
 
@@ -91,6 +110,47 @@ export function Admin() {
     },
   });
 
+  // Update delivery status mutation
+  const updateDeliveryMutation = useMutation({
+    mutationFn: async ({ orderId, status, trackingNumber }: { orderId: number; status: string; trackingNumber?: string }) => {
+      await apiRequest("PATCH", `/api/admin/orders/${orderId}/delivery`, { 
+        deliveryStatus: status, 
+        trackingNumber 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-events'] });
+      toast({ title: "Success", description: "Delivery status updated successfully" });
+      setSelectedOrder(null);
+      setDeliveryStatus('');
+      setTrackingNumber('');
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update delivery status", variant: "destructive" });
+    },
+  });
+
+  // Upload image mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/admin/gallery/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/gallery-images'] });
+      toast({ title: "Success", description: "Image uploaded successfully" });
+      setSelectedImageFile(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to upload image", variant: "destructive" });
+    },
+  });
+
   const handleEmailConfigSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateEmailMutation.mutate(emailConfig);
@@ -112,7 +172,10 @@ export function Admin() {
     { id: 'dashboard', name: 'Dashboard', icon: 'fas fa-tachometer-alt' },
     { id: 'users', name: 'Users', icon: 'fas fa-users' },
     { id: 'orders', name: 'Orders', icon: 'fas fa-shopping-cart' },
+    { id: 'delivery', name: 'Delivery Tracking', icon: 'fas fa-truck' },
     { id: 'products', name: 'Products', icon: 'fas fa-box' },
+    { id: 'stock', name: 'Stock Management', icon: 'fas fa-warehouse' },
+    { id: 'gallery', name: 'Gallery Manager', icon: 'fas fa-images' },
     { id: 'email', name: 'Email Settings', icon: 'fas fa-envelope' }
   ];
 
@@ -318,6 +381,250 @@ export function Admin() {
                 </div>
               )}
 
+              {activeTab === 'delivery' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Delivery Tracking</h2>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Orders requiring delivery updates */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h3 className="text-lg font-semibold mb-4">Orders Pending Delivery</h3>
+                      <div className="space-y-3">
+                        {orders.filter(order => order.status === 'confirmed' && order.deliveryStatus !== 'delivered').map((order) => (
+                          <div key={order.id} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                               onClick={() => setSelectedOrder(order)}>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-medium">Order #{order.id}</p>
+                                <p className="text-sm text-gray-600">{order.customerName}</p>
+                                <p className="text-sm text-gray-500">{order.deliveryAddress}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  order.deliveryStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  order.deliveryStatus === 'picked_up' ? 'bg-blue-100 text-blue-800' :
+                                  order.deliveryStatus === 'in_transit' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {order.deliveryStatus}
+                                </span>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  ${(order.total / 100).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Delivery status update form */}
+                    {selectedOrder && (
+                      <div className="bg-white rounded-lg shadow-md p-6">
+                        <h3 className="text-lg font-semibold mb-4">Update Delivery Status</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="font-medium">Order #{selectedOrder.id}</p>
+                            <p className="text-sm text-gray-600">{selectedOrder.customerName}</p>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Delivery Status
+                            </label>
+                            <select
+                              value={deliveryStatus}
+                              onChange={(e) => setDeliveryStatus(e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                            >
+                              <option value="">Select Status</option>
+                              <option value="picked_up">Picked Up</option>
+                              <option value="in_transit">In Transit</option>
+                              <option value="out_for_delivery">Out for Delivery</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="failed">Delivery Failed</option>
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Tracking Number (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={trackingNumber}
+                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="Enter tracking number"
+                            />
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => updateDeliveryMutation.mutate({
+                                orderId: selectedOrder.id,
+                                status: deliveryStatus,
+                                trackingNumber: trackingNumber || undefined
+                              })}
+                              disabled={!deliveryStatus || updateDeliveryMutation.isPending}
+                              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {updateDeliveryMutation.isPending ? 'Updating...' : 'Update Status'}
+                            </button>
+                            <button
+                              onClick={() => setSelectedOrder(null)}
+                              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'stock' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Stock Management</h2>
+                  
+                  <div className="grid md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-green-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-green-800 mb-2">In Stock</h3>
+                      <p className="text-3xl font-bold text-green-900">{stockStatus?.inStock.length || 0}</p>
+                      <p className="text-green-600 text-sm">Products available</p>
+                    </div>
+                    <div className="bg-yellow-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-yellow-800 mb-2">Low Stock</h3>
+                      <p className="text-3xl font-bold text-yellow-900">{stockStatus?.lowStock.length || 0}</p>
+                      <p className="text-yellow-600 text-sm">Need restocking</p>
+                    </div>
+                    <div className="bg-red-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-red-800 mb-2">Out of Stock</h3>
+                      <p className="text-3xl font-bold text-red-900">{stockStatus?.outOfStock.length || 0}</p>
+                      <p className="text-red-600 text-sm">Unavailable</p>
+                    </div>
+                  </div>
+
+                  {/* Stock alerts and reorder suggestions */}
+                  <div className="space-y-6">
+                    {stockStatus?.outOfStock.length > 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p4">
+                        <h3 className="text-lg font-semibold text-red-800 mb-4">Out of Stock Products</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {stockStatus.outOfStock.map((product) => (
+                            <div key={product.id} className="bg-white rounded p-4 border">
+                              <div className="flex items-center space-x-3">
+                                <img src={product.image} alt={product.name} className="h-12 w-12 rounded object-cover" />
+                                <div className="flex-1">
+                                  <p className="font-medium">{product.name}</p>
+                                  <p className="text-sm text-gray-600">Lead Time: {product.leadTime || 'Unknown'} days</p>
+                                  <p className="text-sm text-red-600">Out of Stock</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {stockStatus?.lowStock.length > 0 && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-yellow-800 mb-4">Low Stock Alert</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {stockStatus.lowStock.map((product) => (
+                            <div key={product.id} className="bg-white rounded p-4 border">
+                              <div className="flex items-center space-x-3">
+                                <img src={product.image} alt={product.name} className="h-12 w-12 rounded object-cover" />
+                                <div className="flex-1">
+                                  <p className="font-medium">{product.name}</p>
+                                  <p className="text-sm text-gray-600">Current: {product.stockQuantity}</p>
+                                  <p className="text-sm text-yellow-600">Threshold: {product.lowStockThreshold}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'gallery' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Gallery Manager</h2>
+                  
+                  <div className="mb-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-blue-800 mb-4">Upload New Image</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Image File
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setSelectedImageFile(e.target.files?.[0] || null)}
+                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        
+                        {selectedImageFile && (
+                          <div>
+                            <button
+                              onClick={() => {
+                                const formData = new FormData();
+                                formData.append('image', selectedImageFile);
+                                formData.append('category', 'product');
+                                uploadImageMutation.mutate(formData);
+                              }}
+                              disabled={uploadImageMutation.isPending}
+                              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {uploadImageMutation.isPending ? 'Uploading...' : 'Upload Image'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {galleryImages.map((image) => (
+                      <div key={image.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <img 
+                          src={image.imageUrl} 
+                          alt={image.altText || image.imageName}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="p-4">
+                          <p className="font-medium truncate">{image.imageName}</p>
+                          <p className="text-sm text-gray-600">{image.category}</p>
+                          <div className="mt-2 flex space-x-2">
+                            <button
+                              onClick={() => {
+                                // Toggle active status
+                                // This would need an API endpoint
+                              }}
+                              className={`px-3 py-1 text-xs rounded-full ${
+                                image.isActive 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {image.isActive ? 'Active' : 'Inactive'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'products' && (
                 <div>
                   <h2 className="text-2xl font-bold mb-6">Product Management</h2>
@@ -329,6 +636,7 @@ export function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead Time</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         </tr>
                       </thead>
@@ -355,11 +663,15 @@ export function Admin() {
                                 <div className="text-xs text-red-600">Low Stock</div>
                               )}
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(product as any).leadTime || 0} days
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
                                 product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                               }`}>
-                                {product.inStock ? 'In Stock' : 'Out of Stock'}
+                                {product.stockQuantity > 0 ? 'In Stock' : 
+                                 `Out of Stock (${(product as any).leadTime || 0}d lead time)`}
                               </span>
                             </td>
                           </tr>
