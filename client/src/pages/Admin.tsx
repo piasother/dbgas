@@ -895,7 +895,7 @@ export function Admin() {
                       <div className="bg-white p-4 rounded-lg shadow-sm">
                         <h4 className="font-medium mb-2">Hero Background</h4>
                         <img 
-                          src="/api/static/images/lpg-storage-facility-zimbabwe.jpg" 
+                          src="/images/hero-background-dummy.svg" 
                           alt="Hero Background"
                           className="w-full h-32 object-cover rounded mb-2"
                         />
@@ -914,7 +914,7 @@ export function Admin() {
                       <div className="bg-white p-4 rounded-lg shadow-sm">
                         <h4 className="font-medium mb-2">Installation Team</h4>
                         <img 
-                          src="/api/static/images/lpg-installation-team-zimbabwe.jpg" 
+                          src="/images/installation-team-dummy.svg" 
                           alt="Installation Team"
                           className="w-full h-32 object-cover rounded mb-2"
                         />

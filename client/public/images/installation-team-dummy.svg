@@ -1,0 +1,60 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="groundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#90EE90;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#228B22;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sky background -->
+  <rect width="100%" height="400" fill="#87CEEB"/>
+  
+  <!-- Ground -->
+  <rect x="0" y="400" width="100%" height="200" fill="url(#groundGradient)"/>
+  
+  <!-- House structure -->
+  <rect x="150" y="250" width="200" height="150" fill="#D2691E"/>
+  <polygon points="150,250 250,180 350,250" fill="#8B4513"/>
+  <rect x="180" y="300" width="30" height="50" fill="#654321"/>
+  <rect x="280" y="300" width="40" height="40" fill="#4169E1"/>
+  
+  <!-- Installation team workers (simplified figures) -->
+  <!-- Worker 1 -->
+  <circle cx="100" cy="330" r="15" fill="#FDBCB4"/>
+  <rect x="95" y="345" width="10" height="25" fill="#FF6347"/>
+  <rect x="90" y="370" width="20" height="20" fill="#4169E1"/>
+  <rect x="88" y="390" width="8" height="15" fill="#000"/>
+  <rect x="104" y="390" width="8" height="15" fill="#000"/>
+  
+  <!-- Worker 2 -->
+  <circle cx="450" cy="340" r="15" fill="#FDBCB4"/>
+  <rect x="445" y="355" width="10" height="25" fill="#32CD32"/>
+  <rect x="440" y="380" width="20" height="20" fill="#4169E1"/>
+  <rect x="438" y="400" width="8" height="15" fill="#000"/>
+  <rect x="454" y="400" width="8" height="15" fill="#000"/>
+  
+  <!-- Worker 3 (kneeling, working) -->
+  <circle cx="380" cy="380" r="12" fill="#FDBCB4"/>
+  <rect x="375" y="392" width="10" height="15" fill="#FFD700"/>
+  <rect x="370" y="407" width="20" height="15" fill="#4169E1"/>
+  
+  <!-- LPG cylinder being installed -->
+  <ellipse cx="320" cy="380" rx="15" ry="8" fill="#C0C0C0"/>
+  <rect x="305" y="350" width="30" height="30" fill="#D3D3D3"/>
+  <ellipse cx="320" cy="350" rx="15" ry="8" fill="#E6E6FA"/>
+  
+  <!-- Tools -->
+  <rect x="420" y="390" width="4" height="20" fill="#8B4513"/>
+  <rect x="415" y="390" width="14" height="4" fill="#C0C0C0"/>
+  
+  <!-- Van/truck in background -->
+  <rect x="550" y="320" width="80" height="40" fill="#FF4500"/>
+  <rect x="630" y="330" width="40" height="30" fill="#FF4500"/>
+  <circle cx="570" cy="370" r="12" fill="#000"/>
+  <circle cx="640" cy="370" r="12" fill="#000"/>
+  
+  <!-- Text -->
+  <rect x="200" y="50" width="400" height="80" fill="rgba(0,0,0,0.8)" rx="10"/>
+  <text x="400" y="80" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Professional Installation Team</text>
+  <text x="400" y="110" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">DB Gas Zimbabwe - Expert LPG Installation Services</text>
+</svg>

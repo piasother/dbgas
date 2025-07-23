@@ -142,8 +142,8 @@
   }
 
   .hero-overlay {
-    background: url('https://images.unsplash.com/photo-1587293852726-70cdb56c2866?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080') center/cover;
-    opacity: 0.1;
+    background: url('/images/hero-background-dummy.svg') center/cover;
+    opacity: 0.3;
   }
 
   .feature-icon {

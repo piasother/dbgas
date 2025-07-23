@@ -36,7 +36,7 @@ export function About() {
           
           <div>
             <img 
-              src="/api/static/images/lpg-installation-team-zimbabwe.jpg" 
+              src="/images/installation-team-dummy.svg" 
               alt="DB Gas Professional Installation Team in Zimbabwe" 
               className="w-full h-auto rounded-2xl shadow-lg"
             />
