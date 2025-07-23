@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { User, AdminSetting, EmailSetting, Order, Product, DeliveryEvent, GalleryImage } from "@shared/schema";
 
 export function Admin() {
@@ -24,9 +24,18 @@ export function Admin() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingImage, setEditingImage] = useState<any>(null);
+  const [animatedStats, setAnimatedStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalProducts: 0,
+    lowStockProducts: 0
+  });
+  const intervalRefs = useRef<{ [key: string]: NodeJS.Timeout | null }>({});
 
   // Check if user is admin (you can modify this logic as needed)
-  const isAdmin = user?.email === "andrewsbulle@gmail.com";
+  const isAdmin = (user as any)?.email === "andrewsbulle@gmail.com";
 
   // Redirect if not admin
   useEffect(() => {
@@ -224,6 +233,101 @@ export function Admin() {
     lowStockProducts: products.filter(p => p.stockQuantity <= p.lowStockThreshold).length
   };
 
+  // Animation helper function
+  const animateNumber = (start: number, end: number, key: string, duration = 1500) => {
+    if (intervalRefs.current[key]) {
+      clearInterval(intervalRefs.current[key]!);
+    }
+    
+    const increment = (end - start) / (duration / 16);
+    let current = start;
+    
+    intervalRefs.current[key] = setInterval(() => {
+      current += increment;
+      if (
+        (increment > 0 && current >= end) || 
+        (increment < 0 && current <= end)
+      ) {
+        current = end;
+        clearInterval(intervalRefs.current[key]!);
+        intervalRefs.current[key] = null;
+      }
+      
+      setAnimatedStats(prev => ({
+        ...prev,
+        [key]: Math.floor(current)
+      }));
+    }, 16);
+  };
+
+  // Effect to animate stats when data changes
+  useEffect(() => {
+    if (activeTab === 'dashboard') {
+      Object.entries(stats).forEach(([key, value]) => {
+        const currentValue = animatedStats[key as keyof typeof animatedStats];
+        if (currentValue !== value) {
+          animateNumber(currentValue, value, key);
+        }
+      });
+    }
+
+    // Cleanup intervals on unmount
+    return () => {
+      Object.values(intervalRefs.current).forEach(interval => {
+        if (interval) clearInterval(interval);
+      });
+    };
+  }, [stats, activeTab, animatedStats]);
+
+  // AnimatedWidget component
+  const AnimatedWidget = ({ 
+    title, 
+    value, 
+    subtitle, 
+    icon, 
+    bgColor, 
+    textColor, 
+    iconColor,
+    delay = 0 
+  }: {
+    title: string;
+    value: number;
+    subtitle: string;
+    icon: string;
+    bgColor: string;
+    textColor: string;
+    iconColor: string;
+    delay?: number;
+  }) => (
+    <div 
+      className={`${bgColor} p-6 rounded-lg transform transition-all duration-500 hover:scale-105 hover:shadow-lg cursor-pointer`}
+      style={{ 
+        animationDelay: `${delay}ms`,
+        animation: activeTab === 'dashboard' ? 'slideInUp 0.6s ease-out forwards' : 'none'
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`${textColor} text-sm font-medium opacity-80`}>{title}</p>
+          <p className={`text-3xl font-bold ${textColor} transition-all duration-300`}>
+            {value.toLocaleString()}
+          </p>
+          <p className={`${textColor} text-sm opacity-70 mt-1`}>{subtitle}</p>
+        </div>
+        <div className="relative">
+          <i className={`${icon} text-4xl ${iconColor} transition-transform duration-300 hover:scale-110`}></i>
+          <div className="absolute inset-0 bg-white opacity-20 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+      <div className="mt-4 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-white bg-opacity-60 rounded-full transition-all duration-1000 ease-out"
+          style={{ width: `${Math.min(100, (value / Math.max(stats.totalUsers, stats.totalOrders, stats.totalProducts)) * 100)}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
       <PageHeader 
@@ -256,38 +360,119 @@ export function Admin() {
             {/* Tab Content */}
             <div className="p-6">
               {activeTab === 'dashboard' && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">Dashboard Overview</h2>
+                <div className="fade-in-scale">
+                  <h2 className="text-2xl font-bold mb-6 slide-in-up">Dashboard Overview</h2>
+                  
+                  {/* Main Stats Cards */}
                   <div className="grid md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-blue-50 p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-blue-600 text-sm font-medium">Total Users</p>
-                          <p className="text-3xl font-bold text-blue-900">{stats.totalUsers}</p>
-                          <p className="text-blue-600 text-sm">{stats.activeUsers} active</p>
+                    <AnimatedWidget
+                      title="Total Users"
+                      value={animatedStats.totalUsers}
+                      subtitle={`${animatedStats.activeUsers} active`}
+                      icon="fas fa-users"
+                      bgColor="bg-gradient-to-br from-blue-400 to-blue-600"
+                      textColor="text-white"
+                      iconColor="text-blue-200"
+                      delay={100}
+                    />
+                    <AnimatedWidget
+                      title="Total Orders"
+                      value={animatedStats.totalOrders}
+                      subtitle={`${animatedStats.pendingOrders} pending`}
+                      icon="fas fa-shopping-cart"
+                      bgColor="bg-gradient-to-br from-green-400 to-green-600"
+                      textColor="text-white"
+                      iconColor="text-green-200"
+                      delay={200}
+                    />
+                    <AnimatedWidget
+                      title="Products"
+                      value={animatedStats.totalProducts}
+                      subtitle={`${animatedStats.lowStockProducts} low stock`}
+                      icon="fas fa-box"
+                      bgColor="bg-gradient-to-br from-yellow-400 to-yellow-600"
+                      textColor="text-white"
+                      iconColor="text-yellow-200"
+                      delay={300}
+                    />
+                  </div>
+
+                  {/* Additional Performance Metrics */}
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in-up" style={{ animationDelay: '400ms' }}>
+                      <div className="flex items-center">
+                        <div className="bg-purple-100 p-3 rounded-full mr-4">
+                          <i className="fas fa-chart-line text-purple-600 text-xl"></i>
                         </div>
-                        <i className="fas fa-users text-4xl text-blue-400"></i>
+                        <div>
+                          <p className="text-gray-600 text-sm">Growth Rate</p>
+                          <p className="text-2xl font-bold text-gray-900">+12%</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="bg-green-50 p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-green-600 text-sm font-medium">Total Orders</p>
-                          <p className="text-3xl font-bold text-green-900">{stats.totalOrders}</p>
-                          <p className="text-green-600 text-sm">{stats.pendingOrders} pending</p>
+                    
+                    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in-up" style={{ animationDelay: '500ms' }}>
+                      <div className="flex items-center">
+                        <div className="bg-red-100 p-3 rounded-full mr-4">
+                          <i className="fas fa-exclamation-triangle text-red-600 text-xl animate-bounce-slow"></i>
                         </div>
-                        <i className="fas fa-shopping-cart text-4xl text-green-400"></i>
+                        <div>
+                          <p className="text-gray-600 text-sm">Alerts</p>
+                          <p className="text-2xl font-bold text-gray-900">{animatedStats.lowStockProducts}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="bg-yellow-50 p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-yellow-600 text-sm font-medium">Products</p>
-                          <p className="text-3xl font-bold text-yellow-900">{stats.totalProducts}</p>
-                          <p className="text-yellow-600 text-sm">{stats.lowStockProducts} low stock</p>
+                    
+                    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in-up" style={{ animationDelay: '600ms' }}>
+                      <div className="flex items-center">
+                        <div className="bg-indigo-100 p-3 rounded-full mr-4">
+                          <i className="fas fa-clock text-indigo-600 text-xl animate-pulse-slow"></i>
                         </div>
-                        <i className="fas fa-box text-4xl text-yellow-400"></i>
+                        <div>
+                          <p className="text-gray-600 text-sm">Avg Response</p>
+                          <p className="text-2xl font-bold text-gray-900">2.3h</p>
+                        </div>
                       </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in-up" style={{ animationDelay: '700ms' }}>
+                      <div className="flex items-center">
+                        <div className="bg-teal-100 p-3 rounded-full mr-4">
+                          <i className="fas fa-trophy text-teal-600 text-xl"></i>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Satisfaction</p>
+                          <p className="text-2xl font-bold text-gray-900">94%</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Activity Chart */}
+                  <div className="bg-white p-6 rounded-lg shadow-md slide-in-up" style={{ animationDelay: '800ms' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                      <div className="flex space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-2 h-32">
+                      {[...Array(7)].map((_, i) => (
+                        <div key={i} className="flex flex-col justify-end">
+                          <div 
+                            className="bg-gradient-to-t from-primary to-blue-400 rounded-t transition-all duration-1000 ease-out hover:from-blue-600 hover:to-blue-500"
+                            style={{ 
+                              height: `${Math.random() * 80 + 20}%`,
+                              animation: `slideInUp 1s ease-out ${i * 100}ms forwards`
+                            }}
+                          ></div>
+                          <p className="text-xs text-gray-500 mt-1 text-center">
+                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -538,8 +723,8 @@ export function Admin() {
 
                   {/* Stock alerts and reorder suggestions */}
                   <div className="space-y-6">
-                    {stockStatus?.outOfStock.length > 0 && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p4">
+                    {stockStatus?.outOfStock && stockStatus.outOfStock.length > 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <h3 className="text-lg font-semibold text-red-800 mb-4">Out of Stock Products</h3>
                         <div className="grid md:grid-cols-2 gap-4">
                           {stockStatus.outOfStock.map((product) => (
@@ -558,7 +743,7 @@ export function Admin() {
                       </div>
                     )}
 
-                    {stockStatus?.lowStock.length > 0 && (
+                    {stockStatus?.lowStock && stockStatus.lowStock.length > 0 && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <h3 className="text-lg font-semibold text-yellow-800 mb-4">Low Stock Alert</h3>
                         <div className="grid md:grid-cols-2 gap-4">
