@@ -36,8 +36,8 @@ export function About() {
           
           <div>
             <img 
-              src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-              alt="Professional Installation Team" 
+              src="/api/static/images/lpg-installation-team-zimbabwe.jpg" 
+              alt="DB Gas Professional Installation Team in Zimbabwe" 
               className="w-full h-auto rounded-2xl shadow-lg"
             />
           </div>

@@ -1,3 +1,5 @@
+import dbGasLogo from "@assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png";
+
 export function Hero() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -14,6 +16,13 @@ export function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
+            <div className="flex items-center mb-6">
+              <img 
+                src={dbGasLogo} 
+                alt="DB Gas - Energy for Life" 
+                className="h-20 w-auto mr-4"
+              />
+            </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
               Fueling Zimbabwe Safely — From Homes to Industry
             </h1>
@@ -48,8 +57,8 @@ export function Hero() {
           
           <div className="text-center">
             <img 
-              src="https://images.unsplash.com/photo-1587293852726-70cdb56c2866?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-              alt="LPG Storage Facility" 
+              src="/api/static/images/lpg-storage-facility-zimbabwe.jpg" 
+              alt="DB Gas LPG Storage Facility in Zimbabwe" 
               className="w-full h-auto rounded-2xl shadow-2xl"
             />
           </div>

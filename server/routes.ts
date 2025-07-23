@@ -6,22 +6,18 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 import { Paynow } from "paynow";
 
-// Admin middleware to check if user is admin
+// Admin middleware to check if user is admin (andrewsbulle@gmail.com)
 const isAdmin = async (req: any, res: any, next: any) => {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   
-  try {
-    const userId = req.user.claims.sub;
-    const user = await storage.getUser(userId);
-    if (!user || (user as any).role !== 'admin') {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    next();
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+  const userEmail = req.user?.claims?.email;
+  if (userEmail !== "andrewsbulle@gmail.com") {
+    return res.status(403).json({ message: "Admin access required" });
   }
+  
+  next();
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {

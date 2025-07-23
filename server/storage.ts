@@ -113,7 +113,7 @@ export class DatabaseStorage implements IStorage {
         description: "Perfect for small households and apartments. Clean burning and efficient.",
         price: 1100, // $11.00 in cents
         category: "lpg",
-        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/api/static/images/lpg-9kg-cylinder-zim.jpg",
         badge: "ZERA Approved",
         inStock: true,
         stockQuantity: 150,
@@ -127,7 +127,7 @@ export class DatabaseStorage implements IStorage {
         description: "Ideal for families and medium-sized businesses. Long-lasting supply.",
         price: 2200, // $22.00 in cents
         category: "lpg",
-        image: "https://images.unsplash.com/photo-1574263867128-2e2c9cf14319?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/api/static/images/lpg-19kg-cylinder-zim.jpg",
         badge: "Most Popular",
         inStock: true,
         stockQuantity: 85,
@@ -141,7 +141,7 @@ export class DatabaseStorage implements IStorage {
         description: "Heavy-duty cylinder for commercial use. Includes safety features.",
         price: 9500, // $95.00 in cents
         category: "lpg",
-        image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/api/static/images/lpg-48kg-cylinder-commercial-zim.jpg",
         badge: "Commercial Grade",
         inStock: true,
         stockQuantity: 25,

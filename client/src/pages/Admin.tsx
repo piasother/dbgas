@@ -22,9 +22,12 @@ export function Admin() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
+  // Check if user is admin (you can modify this logic as needed)
+  const isAdmin = user?.email === "andrewsbulle@gmail.com";
+
   // Redirect if not admin
   useEffect(() => {
-    if (!authLoading && (!user || (user as any).role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       toast({
         title: "Access Denied",
         description: "You need admin privileges to access this page.",
@@ -32,42 +35,42 @@ export function Admin() {
       });
       window.location.href = "/";
     }
-  }, [user, authLoading, toast]);
+  }, [user, authLoading, isAdmin, toast]);
 
   // Fetch admin data
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ['/api/admin/orders'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['/api/admin/products'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   const { data: emailSettings } = useQuery<EmailSetting>({
     queryKey: ['/api/admin/email-settings'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   const { data: deliveryEvents = [] } = useQuery<DeliveryEvent[]>({
     queryKey: ['/api/admin/delivery-events', selectedOrder?.id],
-    enabled: (user as any)?.role === 'admin' && !!selectedOrder,
+    enabled: isAdmin && !!selectedOrder,
   });
 
   const { data: galleryImages = [] } = useQuery<GalleryImage[]>({
     queryKey: ['/api/admin/gallery-images'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   const { data: stockStatus } = useQuery<{inStock: Product[], lowStock: Product[], outOfStock: Product[]}>({
     queryKey: ['/api/admin/stock-status'],
-    enabled: (user as any)?.role === 'admin',
+    enabled: isAdmin,
   });
 
   // Update email config when data is loaded
