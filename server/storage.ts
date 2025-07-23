@@ -536,11 +536,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(orders.createdAt));
   }
 
-  // User orders for reorder functionality
-  async getUserOrders(userId: string): Promise<Order[]> {
-    return await db.select().from(orders)
-      .where(eq(orders.userId, userId))
-      .orderBy(desc(orders.createdAt));
+  // Update product details including price
+  async updateProduct(id: number, updates: Partial<Product>): Promise<Product> {
+    const [updated] = await db
+      .update(products)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return updated;
   }
 }
 

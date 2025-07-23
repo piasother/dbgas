@@ -45,6 +45,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update product (admin only)
+  app.put("/api/admin/products/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+      
+      const updated = await storage.updateProduct(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ error: "Failed to update product" });
+    }
+  });
+
   // Get single product
   app.get("/api/products/:id", async (req, res) => {
     try {
@@ -563,6 +579,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading image:", error);
       res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Update gallery image
+  app.put("/api/admin/gallery-images/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid image ID" });
+      }
+      
+      const updated = await storage.updateGalleryImage(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating gallery image:", error);
+      res.status(500).json({ error: "Failed to update gallery image" });
+    }
+  });
+
+  // Update product image specifically
+  app.put("/api/admin/products/:id/image", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+      
+      const { image } = req.body;
+      const updated = await storage.updateProduct(id, { image });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating product image:", error);
+      res.status(500).json({ error: "Failed to update product image" });
     }
   });
 

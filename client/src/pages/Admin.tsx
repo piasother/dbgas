@@ -22,6 +22,8 @@ export function Admin() {
   const [deliveryStatus, setDeliveryStatus] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingImage, setEditingImage] = useState<any>(null);
 
   // Check if user is admin (you can modify this logic as needed)
   const isAdmin = user?.email === "andrewsbulle@gmail.com";
@@ -152,6 +154,36 @@ export function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to upload image", variant: "destructive" });
+    },
+  });
+
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ productId, updates }: { productId: number; updates: any }) => {
+      await apiRequest("PUT", `/api/admin/products/${productId}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/products'] });
+      toast({ title: "Success", description: "Product updated successfully" });
+      setEditingProduct(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update product", variant: "destructive" });
+    },
+  });
+
+  // Update gallery image mutation
+  const updateGalleryImageMutation = useMutation({
+    mutationFn: async ({ imageId, updates }: { imageId: number; updates: any }) => {
+      await apiRequest("PUT", `/api/admin/gallery-images/${imageId}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/gallery-images'] });
+      toast({ title: "Success", description: "Image updated successfully" });
+      setEditingImage(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update image", variant: "destructive" });
     },
   });
 
@@ -589,6 +621,79 @@ export function Admin() {
                     </div>
                   </div>
 
+                  {/* Specific Image Management Sections */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4">Home Page Images</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <h4 className="font-medium mb-2">Hero Background</h4>
+                        <img 
+                          src="/api/static/images/lpg-storage-facility-zimbabwe.jpg" 
+                          alt="Hero Background"
+                          className="w-full h-32 object-cover rounded mb-2"
+                        />
+                        <button
+                          onClick={() => setEditingImage({ 
+                            type: 'hero', 
+                            current: '/api/static/images/lpg-storage-facility-zimbabwe.jpg',
+                            title: 'Hero Background Image'
+                          })}
+                          className="text-sm text-primary hover:text-blue-700"
+                        >
+                          <i className="fas fa-edit mr-1"></i>
+                          Update Image
+                        </button>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <h4 className="font-medium mb-2">Installation Team</h4>
+                        <img 
+                          src="/api/static/images/lpg-installation-team-zimbabwe.jpg" 
+                          alt="Installation Team"
+                          className="w-full h-32 object-cover rounded mb-2"
+                        />
+                        <button
+                          onClick={() => setEditingImage({ 
+                            type: 'installation', 
+                            current: '/api/static/images/lpg-installation-team-zimbabwe.jpg',
+                            title: 'Installation Team Image'
+                          })}
+                          className="text-sm text-primary hover:text-blue-700"
+                        >
+                          <i className="fas fa-edit mr-1"></i>
+                          Update Image
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4">Product Images</h3>
+                    <div className="grid md:grid-cols-4 gap-4">
+                      {products.slice(0, 8).map((product) => (
+                        <div key={product.id} className="bg-white p-4 rounded-lg shadow-sm">
+                          <h4 className="font-medium mb-2 text-sm truncate">{product.name}</h4>
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-full h-24 object-cover rounded mb-2"
+                          />
+                          <button
+                            onClick={() => setEditingImage({ 
+                              type: 'product', 
+                              productId: product.id,
+                              current: product.image,
+                              title: `${product.name} Image`
+                            })}
+                            className="text-sm text-primary hover:text-blue-700"
+                          >
+                            <i className="fas fa-edit mr-1"></i>
+                            Update
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="grid md:grid-cols-3 gap-6">
                     {galleryImages.map((image) => (
                       <div key={image.id} className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -602,9 +707,23 @@ export function Admin() {
                           <p className="text-sm text-gray-600">{image.category}</p>
                           <div className="mt-2 flex space-x-2">
                             <button
+                              onClick={() => setEditingImage({ 
+                                type: 'gallery', 
+                                imageId: image.id,
+                                current: image.imageUrl,
+                                title: image.imageName
+                              })}
+                              className="text-sm text-primary hover:text-blue-700"
+                            >
+                              <i className="fas fa-edit mr-1"></i>
+                              Edit
+                            </button>
+                            <button
                               onClick={() => {
-                                // Toggle active status
-                                // This would need an API endpoint
+                                updateGalleryImageMutation.mutate({ 
+                                  imageId: image.id, 
+                                  updates: { isActive: !image.isActive } 
+                                });
                               }}
                               className={`px-3 py-1 text-xs rounded-full ${
                                 image.isActive 
@@ -619,6 +738,87 @@ export function Admin() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Image Edit Modal */}
+                  {editingImage && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4">
+                        <h3 className="text-lg font-semibold mb-4">Update {editingImage.title}</h3>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.target as HTMLFormElement);
+                          const newImageUrl = formData.get('imageUrl') as string;
+                          
+                          if (editingImage.type === 'product' && editingImage.productId) {
+                            updateProductMutation.mutate({ 
+                              productId: editingImage.productId, 
+                              updates: { image: newImageUrl } 
+                            });
+                          } else if (editingImage.type === 'gallery' && editingImage.imageId) {
+                            updateGalleryImageMutation.mutate({ 
+                              imageId: editingImage.imageId, 
+                              updates: { imageUrl: newImageUrl } 
+                            });
+                          } else {
+                            // For hero and installation images, you would need separate endpoints
+                            toast({ 
+                              title: "Note", 
+                              description: "Static image updates require file replacement on server", 
+                              variant: "destructive" 
+                            });
+                          }
+                          setEditingImage(null);
+                        }}>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Current Image</label>
+                              <img 
+                                src={editingImage.current} 
+                                alt="Current"
+                                className="w-full h-32 object-cover border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">New Image URL</label>
+                              <input
+                                name="imageUrl"
+                                type="text"
+                                defaultValue={editingImage.current}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                placeholder="Enter new image URL"
+                                required
+                              />
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <p><strong>Tip:</strong> Upload your image to a hosting service and paste the URL here.</p>
+                              {editingImage.type === 'hero' || editingImage.type === 'installation' ? (
+                                <p className="text-yellow-600 mt-1">
+                                  <i className="fas fa-info-circle mr-1"></i>
+                                  Static images require server file replacement
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                              type="button"
+                              onClick={() => setEditingImage(null)}
+                              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700"
+                              disabled={updateProductMutation.isPending || updateGalleryImageMutation.isPending}
+                            >
+                              Update Image
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -635,6 +835,7 @@ export function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead Time</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -671,11 +872,119 @@ export function Admin() {
                                  `Out of Stock (${(product as any).leadTime || 0}d lead time)`}
                               </span>
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <button
+                                onClick={() => setEditingProduct(product)}
+                                className="text-primary hover:text-blue-700 mr-3"
+                              >
+                                <i className="fas fa-edit mr-1"></i>
+                                Edit
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Product Edit Modal */}
+                  {editingProduct && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4">
+                        <h3 className="text-lg font-semibold mb-4">Edit Product</h3>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.target as HTMLFormElement);
+                          const updates = {
+                            name: formData.get('name'),
+                            description: formData.get('description'),
+                            price: parseInt(formData.get('price') as string) * 100, // Convert to cents
+                            stockQuantity: parseInt(formData.get('stockQuantity') as string),
+                            lowStockThreshold: parseInt(formData.get('lowStockThreshold') as string),
+                            image: formData.get('image')
+                          };
+                          updateProductMutation.mutate({ productId: editingProduct.id, updates });
+                        }}>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                              <input
+                                name="name"
+                                type="text"
+                                defaultValue={editingProduct.name}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                              <textarea
+                                name="description"
+                                defaultValue={editingProduct.description}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                rows={3}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                              <input
+                                name="price"
+                                type="number"
+                                step="0.01"
+                                defaultValue={(editingProduct.price / 100).toFixed(2)}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                              <input
+                                name="stockQuantity"
+                                type="number"
+                                defaultValue={editingProduct.stockQuantity}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
+                              <input
+                                name="lowStockThreshold"
+                                type="number"
+                                defaultValue={editingProduct.lowStockThreshold}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                              <input
+                                name="image"
+                                type="text"
+                                defaultValue={editingProduct.image}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                              type="button"
+                              onClick={() => setEditingProduct(null)}
+                              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700"
+                              disabled={updateProductMutation.isPending}
+                            >
+                              {updateProductMutation.isPending ? 'Saving...' : 'Save Changes'}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
