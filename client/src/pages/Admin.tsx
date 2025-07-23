@@ -263,7 +263,16 @@ export function Admin() {
   // Effect to animate stats when data changes
   useEffect(() => {
     if (activeTab === 'dashboard') {
-      Object.entries(stats).forEach(([key, value]) => {
+      const newStats = {
+        totalUsers: users.length,
+        activeUsers: users.filter(u => u.status === 'active').length,
+        totalOrders: orders.length,
+        pendingOrders: orders.filter(o => o.status === 'pending').length,
+        totalProducts: products.length,
+        lowStockProducts: products.filter(p => p.stockQuantity <= p.lowStockThreshold).length
+      };
+
+      Object.entries(newStats).forEach(([key, value]) => {
         const currentValue = animatedStats[key as keyof typeof animatedStats];
         if (currentValue !== value) {
           animateNumber(currentValue, value, key);
@@ -277,7 +286,7 @@ export function Admin() {
         if (interval) clearInterval(interval);
       });
     };
-  }, [stats, activeTab, animatedStats]);
+  }, [users.length, orders.length, products.length, activeTab, users, orders, products]);
 
   // AnimatedWidget component
   const AnimatedWidget = ({ 
