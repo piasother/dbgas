@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { PageHeader } from "@/components/PageHeader";
 
 export function SafetyGuide() {
   const safetyRules = [
@@ -73,15 +74,12 @@ export function SafetyGuide() {
 
   return (
     <Layout>
+      <PageHeader 
+        title="LPG Safety Guide" 
+        description="Essential safety information for LPG usage in Zimbabwe"
+      />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">LPG Safety Guide</h1>
-            <p className="text-xl text-gray-600">
-              Essential safety information for LPG usage in Zimbabwe
-            </p>
-          </div>
 
           {/* Safety Rules */}
           <div className="grid md:grid-cols-2 gap-8 mb-12">

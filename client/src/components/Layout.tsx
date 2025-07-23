@@ -54,13 +54,13 @@ export function Layout({ children }: LayoutProps) {
             {/* Desktop Navigation */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-center space-x-4">
-                <button onClick={() => scrollToSection('home')} className="nav-link">Home</button>
+                <Link href="/" className="nav-link">Home</Link>
                 <button onClick={() => scrollToSection('about')} className="nav-link">About Us</button>
                 <button onClick={() => scrollToSection('services')} className="nav-link">Services</button>
                 <button onClick={() => scrollToSection('shop')} className="nav-link">Shop Online</button>
-                <button onClick={() => scrollToSection('commercial')} className="nav-link">Commercial</button>
-                <button onClick={() => scrollToSection('accessories')} className="nav-link">Accessories</button>
-                <button onClick={() => scrollToSection('safety')} className="nav-link">Safety</button>
+                <Link href="/safety-guide" className="nav-link">Safety Guide</Link>
+                <Link href="/installation-guide" className="nav-link">Installation</Link>
+                <Link href="/storage-checklist" className="nav-link">Storage Guide</Link>
                 <button onClick={() => scrollToSection('contact')} className="nav-link">Contact</button>
                 
                 {/* Authentication Controls */}
@@ -79,7 +79,13 @@ export function Layout({ children }: LayoutProps) {
                           Inventory
                         </Button>
                       </Link>
-                      {(user as any)?.role === 'admin' && (
+                      <Link href="/checkout">
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <i className="fas fa-shopping-cart h-4 w-4"></i>
+                          Checkout
+                        </Button>
+                      </Link>
+                      {(user as any)?.email === 'andrewsbulle@gmail.com' && (
                         <Link href="/admin">
                           <Button variant="outline" size="sm" className="flex items-center gap-2 border-red-200 text-red-700 hover:bg-red-50">
                             <i className="fas fa-shield-alt h-4 w-4"></i>
@@ -122,13 +128,13 @@ export function Layout({ children }: LayoutProps) {
           {isMenuOpen && (
             <div className="md:hidden border-t border-gray-200">
               <div className="px-2 pt-2 pb-3 space-y-1 bg-white">
-                <button onClick={() => scrollToSection('home')} className="mobile-nav-link">Home</button>
+                <Link href="/" className="mobile-nav-link">Home</Link>
                 <button onClick={() => scrollToSection('about')} className="mobile-nav-link">About Us</button>
                 <button onClick={() => scrollToSection('services')} className="mobile-nav-link">Services</button>
                 <button onClick={() => scrollToSection('shop')} className="mobile-nav-link">Shop Online</button>
-                <button onClick={() => scrollToSection('commercial')} className="mobile-nav-link">Commercial</button>
-                <button onClick={() => scrollToSection('accessories')} className="mobile-nav-link">Accessories</button>
-                <button onClick={() => scrollToSection('safety')} className="mobile-nav-link">Safety</button>
+                <Link href="/safety-guide" className="mobile-nav-link">Safety Guide</Link>
+                <Link href="/installation-guide" className="mobile-nav-link">Installation</Link>
+                <Link href="/storage-checklist" className="mobile-nav-link">Storage Guide</Link>
                 <button onClick={() => scrollToSection('contact')} className="mobile-nav-link">Contact</button>
                 
                 {/* Mobile Authentication Controls */}
@@ -144,9 +150,23 @@ export function Layout({ children }: LayoutProps) {
                       <Link href="/inventory">
                         <button className="mobile-nav-link flex items-center gap-2">
                           <i className="fas fa-boxes h-4 w-4"></i>
-                          Inventory
+                          Inventory Management
                         </button>
                       </Link>
+                      <Link href="/checkout">
+                        <button className="mobile-nav-link flex items-center gap-2">
+                          <i className="fas fa-shopping-cart h-4 w-4"></i>
+                          Checkout
+                        </button>
+                      </Link>
+                      {(user as any)?.email === 'andrewsbulle@gmail.com' && (
+                        <Link href="/admin">
+                          <button className="mobile-nav-link flex items-center gap-2 text-red-700">
+                            <i className="fas fa-shield-alt h-4 w-4"></i>
+                            Admin Panel
+                          </button>
+                        </Link>
+                      )}
                       <button 
                         className="mobile-nav-link text-red-600"
                         onClick={() => window.location.href = "/api/logout"}

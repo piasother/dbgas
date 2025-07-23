@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -193,18 +194,11 @@ export function Admin() {
 
   return (
     <Layout>
+      <PageHeader 
+        title="Admin Dashboard" 
+        description="Manage DB Gas website and user accounts"
+      />
       <div className="min-h-screen bg-gray-50">
-        {/* Admin Header */}
-        <div className="bg-primary text-white p-6">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold flex items-center">
-              <i className="fas fa-shield-alt mr-3"></i>
-              Admin Dashboard
-            </h1>
-            <p className="text-blue-100 mt-2">Manage DB Gas website and user accounts</p>
-          </div>
-        </div>
-
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-md mb-6">

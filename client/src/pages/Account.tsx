@@ -11,6 +11,8 @@ import { User as UserIcon, Package, Calendar, Phone, MapPin, CreditCard, Shoppin
 import type { Order, User as UserType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useCart } from "@/hooks/useCart";
+import { Layout } from "@/components/Layout";
+import { PageHeader } from "@/components/PageHeader";
 
 export function Account() {
   const { toast } = useToast();
@@ -71,15 +73,20 @@ export function Account() {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="h-48 bg-gray-200 rounded"></div>
-            <div className="h-48 bg-gray-200 rounded"></div>
+      <Layout>
+        <PageHeader 
+          title="My Account" 
+          description="Manage your profile and view your order history"
+        />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+            </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -99,25 +106,27 @@ export function Account() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
-            <p className="text-gray-600 mt-2">Manage your profile and view your order history</p>
+    <Layout>
+      <PageHeader 
+        title="My Account" 
+        description="Manage your profile and view your order history"
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div></div>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+            >
+              Log Out
+            </Button>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = "/api/logout"}
-          >
-            Log Out
-          </Button>
-        </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
-          {/* User Profile */}
-          <div className="md:col-span-1">
-            <Card>
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* User Profile */}
+            <div className="md:col-span-1">
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserIcon className="h-5 w-5" />
@@ -257,6 +266,6 @@ export function Account() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

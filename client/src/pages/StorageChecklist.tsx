@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { PageHeader } from "@/components/PageHeader";
 import { useState } from "react";
 
 export function StorageChecklist() {
@@ -75,17 +76,14 @@ export function StorageChecklist() {
 
   return (
     <Layout>
+      <PageHeader 
+        title="LPG Storage Safety Checklist" 
+        description="Comprehensive checklist for safe LPG cylinder storage"
+      />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">LPG Storage Safety Checklist</h1>
-            <p className="text-xl text-gray-600 mb-6">
-              Comprehensive checklist for safe LPG cylinder storage
-            </p>
-            
-            {/* Progress Bar */}
-            <div className="bg-white rounded-lg p-6 shadow-md mb-8">
+          {/* Progress Bar */}
+          <div className="bg-white rounded-lg p-6 shadow-md mb-8">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-lg font-semibold">Completion Progress</span>
                 <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>

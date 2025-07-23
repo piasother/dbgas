@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { PageHeader } from "@/components/PageHeader";
 
 export function InstallationGuide() {
   const installationSteps = [
@@ -96,20 +97,17 @@ export function InstallationGuide() {
 
   return (
     <Layout>
+      <PageHeader 
+        title="LPG Installation Guide" 
+        description="Professional installation guidelines for safe LPG system setup"
+      />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">LPG Installation Guide</h1>
-            <p className="text-xl text-gray-600">
-              Professional installation guidelines for safe LPG system setup
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+            <p className="text-yellow-800 font-semibold">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              Warning: LPG installation should only be performed by certified professionals
             </p>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
-              <p className="text-yellow-800 font-semibold">
-                <i className="fas fa-exclamation-triangle mr-2"></i>
-                Warning: LPG installation should only be performed by certified professionals
-              </p>
-            </div>
           </div>
 
           {/* Installation Steps */}
