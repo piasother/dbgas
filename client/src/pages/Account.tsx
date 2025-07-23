@@ -127,63 +127,63 @@ export function Account() {
             {/* User Profile */}
             <div className="md:col-span-1">
               <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
-                  Profile Information
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserIcon className="h-5 w-5" />
+                    Profile Information
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  {userData?.profileImageUrl && (
-                    <img
-                      src={userData.profileImageUrl}
-                      alt="Profile"
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      {userData?.firstName || userData?.lastName 
-                        ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-                        : 'User'
-                      }
-                    </h3>
-                    <p className="text-gray-600">{userData?.email}</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    {userData?.profileImageUrl && (
+                      <img
+                        src={userData.profileImageUrl}
+                        alt="Profile"
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    )}
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {userData?.firstName || userData?.lastName 
+                          ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+                          : 'User'
+                        }
+                      </h3>
+                      <p className="text-gray-600">{userData?.email}</p>
+                    </div>
                   </div>
-                </div>
-                <Separator />
-                <div className="text-sm text-gray-600">
-                  <p>Member since {new Date(userData?.createdAt || '').toLocaleDateString()}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <Separator />
+                  <div className="text-sm text-gray-600">
+                    <p>Member since {new Date(userData?.createdAt || '').toLocaleDateString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Order History */}
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Order History
-                </CardTitle>
-                <CardDescription>
-                  View your recent orders and track their status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {ordersLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-24 bg-gray-200 rounded"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : orders && orders.length > 0 ? (
-                  <div className="space-y-4">
-                    {orders.map((order: Order) => (
+            {/* Order History */}
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Order History
+                  </CardTitle>
+                  <CardDescription>
+                    View your recent orders and track their status
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {ordersLoading ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-24 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : orders && orders.length > 0 ? (
+                    <div className="space-y-4">
+                      {orders.map((order: Order) => (
                       <Card key={order.id} className="border-l-4 border-l-blue-500">
                         <CardContent className="pt-6">
                           <div className="flex items-start justify-between">
@@ -249,20 +249,21 @@ export function Account() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
-                    <p className="text-gray-600 mb-4">Start shopping to see your orders here</p>
-                    <Button onClick={() => window.location.href = "/#shop"}>
-                      Browse Products
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
+                      <p className="text-gray-600 mb-4">Start shopping to see your orders here</p>
+                      <Button onClick={() => window.location.href = "/#shop"}>
+                        Browse Products
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

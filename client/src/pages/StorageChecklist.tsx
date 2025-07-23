@@ -171,7 +171,6 @@ export function StorageChecklist() {
             </button>
           </div>
         </div>
-      </div>
-    </Layout>
+      </Layout>
   );
 }
