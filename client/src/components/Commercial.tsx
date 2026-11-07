@@ -1,4 +1,6 @@
+import { useSiteImage } from "@/hooks/useSiteImages";
 export function Commercial() {
+  const commercialImage = useSiteImage("commercial");
   const industries = [
     {
       icon: "fas fa-bread-slice",
@@ -61,9 +63,11 @@ export function Commercial() {
           
           <div>
             <img 
-              src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-              alt="Commercial Kitchen" 
-              className="w-full h-auto rounded-2xl shadow-lg"
+              src={commercialImage}
+              alt="Commercial kitchen running on LPG"
+              className="w-full h-auto rounded-3xl shadow-lg object-cover aspect-[640/460]"
+              width={640}
+              height={460}
             />
           </div>
         </div>

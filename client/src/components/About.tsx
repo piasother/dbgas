@@ -1,4 +1,6 @@
+import { useSiteImage } from "@/hooks/useSiteImages";
 export function About() {
+  const aboutImage = useSiteImage("about");
   return (
     <section id="about" className="py-20 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -6,7 +8,7 @@ export function About() {
           <div className="space-y-6">
             <h2 className="section-title text-3xl md:text-4xl mb-12">About DB Gas</h2>
             <p className="text-lg text-gray-600 leading-relaxed">
-              Leading LPG supplier in Zimbabwe, serving residential and commercial customers with reliable, safe energy solutions since establishment.
+              A Bulawayo-based LPG supplier serving homes, businesses and institutions across Zimbabwe with reliable, safe energy solutions since 2018.
             </p>
             
             <div className="grid md:grid-cols-2 gap-6 mt-8">
@@ -36,9 +38,9 @@ export function About() {
           
           <div>
             <img 
-              src="/images/installation-team-dummy.svg" 
+              src={aboutImage} 
               alt="DB Gas Professional Installation Team in Zimbabwe" 
-              className="w-full h-auto rounded-2xl shadow-lg"
+              className="w-full h-auto rounded-3xl shadow-lg object-cover aspect-[640/460]" width={640} height={460}
             />
           </div>
         </div>

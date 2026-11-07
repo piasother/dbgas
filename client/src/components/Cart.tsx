@@ -27,7 +27,7 @@ export function Cart({ isOpen, onClose }: CartProps) {
     onSuccess: () => {
       toast({
         title: "Order Placed Successfully!",
-        description: "We'll contact you within 2 hours to confirm delivery details.",
+        description: "We'll contact you shortly to confirm delivery details.",
       });
       clearCart();
       setShowCheckout(false);
@@ -155,11 +155,18 @@ export function Cart({ isOpen, onClose }: CartProps) {
                 <div className="flex justify-between items-center mb-4">
                   <strong className="text-lg">Total: ${(getTotalPrice() / 100).toFixed(2)}</strong>
                 </div>
+                <a
+                  href="/checkout"
+                  className="btn-primary w-full py-3 rounded-lg font-semibold mb-3 inline-flex items-center justify-center"
+                >
+                  <i className="fas fa-credit-card mr-2"></i>
+                  Pay Online with PayNow
+                </a>
                 <button 
                   onClick={handleCheckout}
-                  className="btn-primary w-full py-3 rounded-lg font-semibold mb-3"
+                  className="w-full py-3 rounded-lg font-semibold mb-3 border-2 border-primary text-primary hover:bg-blue-50"
                 >
-                  Proceed to Checkout
+                  Pay on Delivery / Collection
                 </button>
                 <button 
                   onClick={clearCart}
@@ -250,9 +257,9 @@ export function Cart({ isOpen, onClose }: CartProps) {
               {/* Delivery Info */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h6 className="font-semibold mb-2">Delivery Information</h6>
-                <p className="text-sm mb-1"><i className="fas fa-clock mr-2"></i>2-hour delivery</p>
+                <p className="text-sm mb-1"><i className="fas fa-clock mr-2"></i>Timely delivery</p>
                 <p className="text-sm mb-1"><i className="fas fa-shield-alt mr-2"></i>ZERA certified</p>
-                <p className="text-sm mb-3"><i className="fas fa-phone mr-2"></i>24/7 support</p>
+                <p className="text-sm mb-3"><i className="fas fa-phone mr-2"></i>Support: 0713 314 920</p>
                 
                 <a 
                   href="https://wa.me/263713314920" 

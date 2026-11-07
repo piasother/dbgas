@@ -1,3 +1,4 @@
+import { BookInstallation } from "@/components/BookInstallation";
 import { Layout } from "@/components/Layout";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -178,13 +179,10 @@ export function InstallationGuide() {
                 <p className="font-semibold">Same Day Service</p>
               </div>
             </div>
-            <a 
-              href="https://wa.me/263713314920?text=I need professional LPG installation service"
-              className="bg-white text-primary px-8 py-3 rounded-lg font-semibold inline-flex items-center hover:bg-gray-100"
-            >
-              <i className="fab fa-whatsapp mr-2"></i>
+            <BookInstallation className="bg-white text-primary px-8 py-3 rounded-lg font-semibold inline-flex items-center hover:bg-gray-100">
+              <i className="fas fa-calendar-check mr-2"></i>
               Book Installation Service
-            </a>
+            </BookInstallation>
           </div>
         </div>
       </div>

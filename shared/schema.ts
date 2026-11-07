@@ -29,6 +29,7 @@ export const inquiries = pgTable("inquiries", {
   email: text("email"),
   inquiryType: text("inquiry_type").notNull(),
   message: text("message").notNull(),
+  status: text("status").default("new"), // new, contacted, closed
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -50,6 +51,9 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  passwordHash: varchar("password_hash"), // bcrypt hash for email/password login
+  resetTokenHash: varchar("reset_token_hash"), // sha256 of the emailed reset token
+  resetTokenExpiresAt: timestamp("reset_token_expires_at"),
   role: varchar("role").default("user"), // 'admin' or 'user'
   status: varchar("status").default("active"), // 'active', 'suspended', 'deleted'
   createdAt: timestamp("created_at").defaultNow(),
@@ -170,6 +174,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
 export const insertInquirySchema = createInsertSchema(inquiries).omit({
   id: true,
   createdAt: true,
+  status: true,
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

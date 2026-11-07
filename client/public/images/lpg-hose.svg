@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="1.5 metre LPG hose with fittings">
+  <defs>
+    <linearGradient id="hsBrass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset=".5" stop-color="#d4a017"/>
+      <stop offset="1" stop-color="#a16207"/>
+    </linearGradient>
+    <linearGradient id="hsClamp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f4f6"/>
+      <stop offset="1" stop-color="#9ca3af"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#f8fafc"/>
+  <ellipse cx="200" cy="262" rx="150" ry="12" fill="#e5e7eb"/>
+
+  <!-- coiled orange hose -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M78 200 C 60 120, 160 70, 230 95 C 320 125, 330 210, 250 220 C 170 230, 130 170, 180 135 C 220 108, 290 140, 270 185"
+          stroke="#c2410c" stroke-width="30"/>
+    <path d="M78 200 C 60 120, 160 70, 230 95 C 320 125, 330 210, 250 220 C 170 230, 130 170, 180 135 C 220 108, 290 140, 270 185"
+          stroke="#ff6b35" stroke-width="24"/>
+    <path d="M78 200 C 60 120, 160 70, 230 95 C 320 125, 330 210, 250 220 C 170 230, 130 170, 180 135 C 220 108, 290 140, 270 185"
+          stroke="#ffffff" stroke-opacity=".28" stroke-width="5" stroke-dasharray="1 0" transform="translate(-3 -6)"/>
+  </g>
+
+  <!-- left fitting -->
+  <g transform="translate(78 200) rotate(100)">
+    <rect x="-16" y="-8" width="32" height="20" rx="3" fill="url(#hsClamp)" stroke="#6b7280" stroke-width="2"/>
+    <rect x="-12" y="12" width="24" height="26" rx="3" fill="url(#hsBrass)" stroke="#92400e" stroke-width="2"/>
+    <rect x="-7" y="38" width="14" height="14" rx="2" fill="url(#hsBrass)" stroke="#92400e" stroke-width="2"/>
+  </g>
+  <!-- right fitting -->
+  <g transform="translate(270 185) rotate(70)">
+    <rect x="-16" y="-8" width="32" height="20" rx="3" fill="url(#hsClamp)" stroke="#6b7280" stroke-width="2"/>
+    <rect x="-12" y="12" width="24" height="26" rx="3" fill="url(#hsBrass)" stroke="#92400e" stroke-width="2"/>
+    <rect x="-7" y="38" width="14" height="14" rx="2" fill="url(#hsBrass)" stroke="#92400e" stroke-width="2"/>
+  </g>
+
+  <!-- length tag -->
+  <rect x="290" y="40" width="80" height="44" rx="8" fill="#1b365d"/>
+  <text x="330" y="61" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#fff">1.5 m</text>
+  <text x="330" y="76" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#cbd5e1">LPG HOSE</text>
+</svg>

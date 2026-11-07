@@ -4,16 +4,16 @@ export function Stats() {
       <div className="bg-white rounded-2xl shadow-2xl">
         <div className="grid md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200">
           <div className="text-center p-8">
-            <div className="stat-number mb-2">2hr</div>
-            <p className="font-semibold text-gray-700">Delivery Time</p>
+            <div className="stat-number mb-2">Timely</div>
+            <p className="font-semibold text-gray-700">Delivery</p>
           </div>
           <div className="text-center p-8">
-            <div className="stat-number mb-2">50t</div>
+            <div className="stat-number mb-2">25t</div>
             <p className="font-semibold text-gray-700">Storage Capacity</p>
           </div>
           <div className="text-center p-8">
-            <div className="stat-number mb-2">24/7</div>
-            <p className="font-semibold text-gray-700">Emergency Service</p>
+            <div className="stat-number mb-2">2018</div>
+            <p className="font-semibold text-gray-700">Serving Since</p>
           </div>
           <div className="text-center p-8">
             <div className="stat-number mb-2">ZERA</div>

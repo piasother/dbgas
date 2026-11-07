@@ -142,8 +142,9 @@
   }
 
   .hero-overlay {
-    background: url('/images/hero-background-dummy.svg') center/cover;
-    opacity: 0.3;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(255, 107, 53, 0.18), transparent 40%),
+      radial-gradient(circle at 10% 90%, rgba(74, 144, 226, 0.25), transparent 45%);
   }
 
   .feature-icon {
@@ -219,4 +220,23 @@
   .stat-number {
     @apply text-2xl;
   }
+}
+
+/* Footer */
+.footer-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.footer-link {
+  color: #9ca3af;
+  transition: color 0.15s;
+}
+.footer-link:hover {
+  color: #fff;
+}
+.footer-divider {
+  border-top: 1px solid #1f2937;
 }

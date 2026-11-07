@@ -1,27 +1,28 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { orders, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { insertInquirySchema, insertOrderSchema, insertInventoryMovementSchema } from "@shared/schema";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin, isStaff, toPublicUser, ROLES, isOwnerEmail } from "./auth";
+import { syncCatalogueDefaults } from "./content-sync";
+import { registerAdminRoutes } from "./admin-routes";
+import { notifyBusiness } from "./mailer";
+import { describeItems } from "./orders";
+import {
+  buildOrderItems,
+  newPaymentReference,
+  getPaynow,
+  verifyAndApplyPaynowStatus,
+  findOrderByReference,
+  findOrderById,
+  OrderInputError,
+} from "./orders";
 import { z } from "zod";
-import { Paynow } from "paynow";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-
-// Admin middleware to check if user is admin (andrewsbulle@gmail.com)
-const isAdmin = async (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  const userEmail = req.user?.claims?.email;
-  if (userEmail !== "andrewsbulle@gmail.com") {
-    return res.status(403).json({ message: "Admin access required" });
-  }
-  
-  next();
-};
 
 // Configure multer for file uploads
 const storage_config = multer.diskStorage({
@@ -59,13 +60,15 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+  await syncCatalogueDefaults();
+  await registerAdminRoutes(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(user ? toPublicUser(user) : null);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -78,22 +81,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(products);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
-    }
-  });
-
-  // Update product (admin only)
-  app.put("/api/admin/products/:id", isAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid product ID" });
-      }
-      
-      const updated = await storage.updateProduct(id, req.body);
-      res.json(updated);
-    } catch (error) {
-      console.error("Error updating product:", error);
-      res.status(500).json({ error: "Failed to update product" });
     }
   });
 
@@ -121,7 +108,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertInquirySchema.parse(req.body);
       const inquiry = await storage.createInquiry(validatedData);
-      res.status(201).json(inquiry);
+      notifyBusiness(`New website enquiry from ${inquiry.name}`, [
+        ["Name", inquiry.name],
+        ["Phone", inquiry.phone],
+        ["Email", inquiry.email],
+        ["Type", inquiry.inquiryType],
+        ["Message", inquiry.message],
+      ], inquiry.email || undefined);
+      res.status(201).json({ id: inquiry.id });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Invalid inquiry data", details: error.errors });
@@ -130,23 +124,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create order (with optional user authentication)
-  app.post("/api/orders", async (req, res) => {
+  // Create order (cash / EcoCash on delivery). Prices are computed on the server.
+  app.post("/api/orders", async (req: any, res) => {
     try {
-      const validatedData = insertOrderSchema.parse(req.body);
-      
-      // If user is authenticated, add userId to order
-      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-        const userId = (req.user as any).claims.sub;
-        validatedData.userId = userId;
+      const body = req.body || {};
+      const customerName = String(body.customerName || "").trim().slice(0, 120);
+      const customerPhone = String(body.customerPhone || body.phoneNumber || "").trim().slice(0, 40);
+      const deliveryAddress = String(body.deliveryAddress || "").trim().slice(0, 500);
+      const paymentMethod = String(body.paymentMethod || "").trim().slice(0, 40);
+      if (!customerName || !customerPhone || !deliveryAddress || !paymentMethod) {
+        return res.status(400).json({ error: "Name, phone, delivery address and payment method are required" });
       }
-      
-      const order = await storage.createOrder(validatedData);
-      res.status(201).json(order);
+
+      const { items, totalCents } = await buildOrderItems(body.items);
+      const userId = req.isAuthenticated && req.isAuthenticated() && req.user ? req.user.claims.sub : null;
+
+      const order = await storage.createOrder({
+        userId,
+        customerName,
+        customerPhone,
+        phoneNumber: customerPhone,
+        email: body.email ? String(body.email).slice(0, 200) : null,
+        deliveryAddress,
+        paymentMethod,
+        paymentStatus: "pending",
+        items: JSON.stringify(items),
+        total: totalCents,
+        totalAmount: totalCents,
+      } as any);
+      notifyBusiness(`New order #${order.id} (${paymentMethod}, pay on delivery)`, [
+        ["Order", `#${order.id}`],
+        ["Total", `$${(totalCents / 100).toFixed(2)}`],
+        ["Payment", paymentMethod],
+        ["Customer", customerName],
+        ["Phone", customerPhone],
+        ["Delivery address", deliveryAddress],
+        ["Items", describeItems(items)],
+      ]);
+      res.status(201).json({ id: order.id, total: order.total, status: order.status });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Invalid order data", details: error.errors });
-      }
+      if (error instanceof OrderInputError) return res.status(400).json({ error: error.message });
+      console.error("Error creating order:", error);
       res.status(500).json({ error: "Failed to create order" });
     }
   });
@@ -164,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all orders (for admin purposes)
-  app.get("/api/orders", async (req, res) => {
+  app.get("/api/orders", isStaff, async (req, res) => {
     try {
       const orders = await storage.getOrders();
       res.json(orders);
@@ -174,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update order status (protected route)
-  app.patch("/api/orders/:id/status", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/orders/:id/status", isStaff, async (req: any, res) => {
     try {
       const orderId = parseInt(req.params.id);
       const { status } = req.body;
@@ -198,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Inventory Management Routes
 
   // Get low stock products
-  app.get("/api/inventory/low-stock", isAuthenticated, async (req, res) => {
+  app.get("/api/inventory/low-stock", isStaff, async (req, res) => {
     try {
       const lowStockProducts = await storage.getLowStockProducts();
       res.json(lowStockProducts);
@@ -209,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get stock alerts
-  app.get("/api/inventory/alerts", isAuthenticated, async (req, res) => {
+  app.get("/api/inventory/alerts", isStaff, async (req, res) => {
     try {
       const alerts = await storage.getActiveStockAlerts();
       res.json(alerts);
@@ -220,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Acknowledge stock alert
-  app.patch("/api/inventory/alerts/:id/acknowledge", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/inventory/alerts/:id/acknowledge", isStaff, async (req: any, res) => {
     try {
       const alertId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -238,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update product stock
-  app.patch("/api/products/:id/stock", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/products/:id/stock", isStaff, async (req: any, res) => {
     try {
       const productId = parseInt(req.params.id);
       const { stockQuantity } = req.body;
@@ -272,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Adjust stock (add/remove inventory)
-  app.post("/api/inventory/adjust", isAuthenticated, async (req: any, res) => {
+  app.post("/api/inventory/adjust", isStaff, async (req: any, res) => {
     try {
       const { productId, quantity, reason, notes } = req.body;
       const userId = req.user.claims.sub;
@@ -290,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get inventory movements
-  app.get("/api/inventory/movements", isAuthenticated, async (req, res) => {
+  app.get("/api/inventory/movements", isStaff, async (req, res) => {
     try {
       const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
       const movements = await storage.getInventoryMovements(productId);
@@ -301,161 +319,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PayNow payment integration
+  // PayNow payment integration. Prices come from the database, and an order is
+  // only marked paid after Paynow confirms it (see server/orders.ts).
   app.post("/api/create-paynow-payment", isAuthenticated, async (req: any, res) => {
     try {
-      const { items, total, phoneNumber, email, customerName } = req.body;
+      const { phoneNumber, email } = req.body || {};
       const userId = req.user.claims.sub;
+      const customerName = String(req.body?.customerName || req.user.claims.email || "Customer").slice(0, 120);
+      const payerEmail = String(email || req.user.claims.email || "").trim();
+      if (!payerEmail) return res.status(400).json({ success: false, error: "Email is required" });
+      if (!phoneNumber) return res.status(400).json({ success: false, error: "Phone number is required" });
 
-      // Initialize PayNow
-      const paynow = new Paynow(
-        process.env.PAYNOW_INTEGRATION_ID || "13431",
-        process.env.PAYNOW_INTEGRATION_KEY || "mock-key",
-        `${req.protocol}://${req.get('host')}/api/paynow/return`,
-        `${req.protocol}://${req.get('host')}/api/paynow/result`
-      );
+      const { items, totalCents } = await buildOrderItems(req.body?.items);
+      const reference = newPaymentReference();
 
-      // Create a new payment
-      const payment = paynow.createPayment(`Order-${Date.now()}`, email);
+      // Create the order first so the return link can carry its id.
+      const order = await storage.createOrder({
+        userId,
+        status: "pending",
+        total: totalCents,
+        totalAmount: totalCents,
+        paymentMethod: "paynow",
+        paymentStatus: "pending",
+        items: JSON.stringify(items),
+        customerName,
+        customerPhone: String(phoneNumber).slice(0, 40),
+        phoneNumber: String(phoneNumber).slice(0, 40),
+        email: payerEmail,
+        deliveryAddress: "TBD",
+        paynowReference: reference,
+      } as any);
 
-      // Add items to the payment
-      items.forEach((item: any) => {
-        payment.add(item.name, item.price * item.quantity);
-      });
-
-      // Send payment to PayNow
-      const response = await paynow.send(payment);
-
-      if (response.success) {
-        // Create order in database
-        const orderData = {
-          userId,
-          status: 'pending',
-          total: Math.round(total * 100), // convert to cents
-          paymentMethod: 'paynow',
-          paymentStatus: 'pending',
-          items: JSON.stringify(items),
-          customerName,
-          customerPhone: phoneNumber,
-          phoneNumber,
-          email,
-          deliveryAddress: 'TBD', // Set default delivery address
-          paynowReference: response.reference,
-          pollUrl: response.pollurl
-        };
-
-        const order = await storage.createOrder(orderData);
-        
-        // Create initial delivery event
-        try {
-          await storage.createDeliveryEvent({
-            orderId: order.id,
-            eventType: 'pending',
-            eventDescription: 'Order placed and awaiting payment confirmation',
-            createdBy: userId
-          });
-        } catch (error) {
-          console.error("Error creating delivery event:", error);
-        }
-
-        res.json({
-          success: true,
-          redirectUrl: response.redirecturl,
-          pollUrl: response.pollurl,
-          reference: response.reference,
-          orderId: order.id
-        });
-      } else {
-        console.error("PayNow payment creation failed:", response.error);
-        res.status(400).json({
-          success: false,
-          error: response.error || "Failed to create payment"
-        });
+      const base = `${req.protocol}://${req.get("host")}`;
+      const paynow = getPaynow(`${base}/api/paynow/result`, `${base}/api/paynow/return?order=${order.id}`);
+      const payment = paynow.createPayment(reference, payerEmail);
+      for (const item of items) {
+        // Paynow expects amounts in dollars; our prices are stored in cents.
+        payment.add(`${item.product.name} x${item.quantity}`, (item.product.price * item.quantity) / 100);
       }
-    } catch (error) {
-      console.error("PayNow payment error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Payment processing failed"
+
+      const response: any = await paynow.send(payment);
+      if (!response?.success) {
+        console.error("PayNow payment creation failed:", response?.error);
+        await storage.updateOrderStatus(order.id, "cancelled");
+        return res.status(400).json({ success: false, error: response?.error || "Failed to create payment" });
+      }
+
+      await db.update(orders).set({ pollUrl: response.pollUrl, updatedAt: new Date() }).where(eq(orders.id, order.id));
+
+      try {
+        await storage.createDeliveryEvent({
+          orderId: order.id,
+          eventType: "pending",
+          eventDescription: "Order placed and awaiting payment confirmation",
+          createdBy: userId,
+        } as any);
+      } catch (error) {
+        console.error("Error creating delivery event:", error);
+      }
+
+      res.json({
+        success: true,
+        redirectUrl: response.redirectUrl,
+        pollUrl: response.pollUrl,
+        reference,
+        orderId: order.id,
       });
+    } catch (error) {
+      if (error instanceof OrderInputError) return res.status(400).json({ success: false, error: error.message });
+      console.error("PayNow payment error:", error);
+      res.status(500).json({ success: false, error: "Payment processing failed" });
     }
   });
 
-  // PayNow return URL handler
-  app.post("/api/paynow/return", async (req, res) => {
+  // Where Paynow sends the customer's browser after paying (a normal link, so GET).
+  const handlePaynowReturn = async (req: any, res: any) => {
     try {
-      const { reference, paynowreference, amount, status } = req.body;
-      
-      // Update order status based on payment result
-      if (status === "Paid") {
-        // Find and update the order
-        const orders = await storage.getOrders();
-        const order = orders.find(o => o.paynowReference === reference);
-        
-        if (order) {
-          await storage.updateOrderStatus(order.id, 'confirmed');
-          
-          // Update inventory for paid orders and trigger delivery tracking
-          const orderItems = JSON.parse(order.items || '[]');
-          for (const item of orderItems) {
-            try {
-              // Use the new adjustStock method which handles both stock update and inventory movement
-              await storage.adjustStock(
-                item.product.id,
-                -item.quantity,
-                'sale',
-                order.userId,
-                `Order #${order.id} - ${item.product.name} (PayNow payment confirmed)`
-              );
-            } catch (error) {
-              console.error(`Error adjusting stock for product ${item.product.id}:`, error);
-            }
-          }
-          
-          // Create delivery tracking event for confirmed payment
-          try {
-            await storage.createDeliveryEvent({
-              orderId: order.id,
-              eventType: 'confirmed',
-              eventDescription: 'Payment confirmed - Order ready for pickup/delivery',
-              createdBy: order.userId
-            });
-          } catch (error) {
-            console.error("Error creating delivery event:", error);
-          }
-        }
-        
-        res.redirect(`/?payment=success&order=${order?.id}`);
-      } else {
-        res.redirect(`/?payment=failed&reason=${status}`);
+      const orderId = parseInt(String(req.query.order || req.body?.order || ""), 10);
+      const order = Number.isInteger(orderId) ? await findOrderById(orderId) : undefined;
+      if (!order) return res.redirect("/?payment=error");
+
+      const status = await verifyAndApplyPaynowStatus(order);
+      if (status && ["paid", "awaiting delivery", "delivered"].includes(status)) {
+        return res.redirect(`/?payment=success&order=${order.id}`);
       }
+      if (status && ["cancelled", "failed"].includes(status)) {
+        return res.redirect(`/?payment=failed&order=${order.id}`);
+      }
+      // Not confirmed yet (e.g. EcoCash prompt still open) - Paynow will notify us.
+      return res.redirect(`/?payment=pending&order=${order.id}`);
     } catch (error) {
       console.error("PayNow return handler error:", error);
       res.redirect("/?payment=error");
     }
-  });
+  };
+  app.get("/api/paynow/return", handlePaynowReturn);
+  app.post("/api/paynow/return", handlePaynowReturn);
 
-  // PayNow result URL handler (webhook)
+  // Paynow server-to-server notification. We never trust the posted status:
+  // we look the order up by reference and ask Paynow directly.
   app.post("/api/paynow/result", async (req, res) => {
     try {
-      const { reference, paynowreference, amount, status } = req.body;
-      
-      console.log("PayNow webhook received:", { reference, status });
-      
-      // Update order status
+      const reference = String(req.body?.reference || "");
       if (reference) {
-        const orders = await storage.getOrders();
-        const order = orders.find(o => o.paynowReference === reference);
-        
+        const order = await findOrderByReference(reference);
         if (order) {
-          if (status === "Paid") {
-            await storage.updateOrderStatus(order.id, 'confirmed');
-          } else if (status === "Cancelled" || status === "Failed") {
-            await storage.updateOrderStatus(order.id, 'cancelled');
-          }
+          const status = await verifyAndApplyPaynowStatus(order);
+          console.log(`PayNow update for order #${order.id}: ${status ?? "unverified"}`);
         }
       }
-      
       res.status(200).send("OK");
     } catch (error) {
       console.error("PayNow webhook error:", error);
@@ -468,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", isAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
+      res.json(users.map(toPublicUser));
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
@@ -476,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user status (admin only)
-  app.patch("/api/admin/users/:id", isAdmin, async (req, res) => {
+  app.patch("/api/admin/users/:id", isAdmin, async (req: any, res) => {
     try {
       const userId = req.params.id;
       const { status } = req.body;
@@ -484,17 +456,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['active', 'suspended', 'deleted'].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
       }
+      if (userId === req.user.claims.sub) {
+        return res.status(400).json({ error: "You can't change your own account status." });
+      }
+      const target = await storage.getUser(userId);
+      if (!target) return res.status(404).json({ error: "User not found" });
+      if (isOwnerEmail(target.email)) {
+        return res.status(400).json({ error: "The owner account can't be suspended." });
+      }
 
       const user = await storage.updateUserStatus(userId, status);
-      res.json(user);
+      res.json(toPublicUser(user));
     } catch (error) {
       console.error("Error updating user status:", error);
       res.status(500).json({ error: "Failed to update user status" });
     }
   });
 
+  // Change a user's role (admin only): user | staff | admin
+  app.patch("/api/admin/users/:id/role", isAdmin, async (req: any, res) => {
+    try {
+      const targetId = String(req.params.id);
+      const role = String(req.body?.role || "");
+      if (!(ROLES as readonly string[]).includes(role)) {
+        return res.status(400).json({ error: "Role must be user, staff or admin" });
+      }
+      if (targetId === req.user.claims.sub) {
+        return res.status(400).json({ error: "You can't change your own role." });
+      }
+      const target = await storage.getUser(targetId);
+      if (!target) return res.status(404).json({ error: "User not found" });
+      if (isOwnerEmail(target.email)) {
+        return res.status(400).json({ error: "The owner account is always an admin." });
+      }
+      const [updated] = await db
+        .update(users)
+        .set({ role, updatedAt: new Date() })
+        .where(eq(users.id, targetId))
+        .returning();
+      console.log(`Role change: ${req.user.claims.email} set ${target.email} to ${role}`);
+      res.json(toPublicUser(updated));
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ error: "Failed to update role" });
+    }
+  });
+
   // Get all orders (admin only)
-  app.get("/api/admin/orders", isAdmin, async (req, res) => {
+  app.get("/api/admin/orders", isStaff, async (req, res) => {
     try {
       const orders = await storage.getOrders();
       res.json(orders);
@@ -505,7 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all products (admin only)
-  app.get("/api/admin/products", isAdmin, async (req, res) => {
+  app.get("/api/admin/products", isStaff, async (req, res) => {
     try {
       const products = await storage.getProducts();
       res.json(products);
@@ -527,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update email settings (admin only)
-  app.put("/api/admin/email-settings", isAdmin, async (req, res) => {
+  app.put("/api/admin/email-settings", isAdmin, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const settings = await storage.updateEmailSettings(req.body, userId);
@@ -539,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delivery tracking routes (admin only)
-  app.patch("/api/admin/orders/:id/delivery", isAdmin, async (req, res) => {
+  app.patch("/api/admin/orders/:id/delivery", isStaff, async (req: any, res) => {
     try {
       const orderId = parseInt(req.params.id);
       const { deliveryStatus, trackingNumber } = req.body;
@@ -566,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/delivery-events/:orderId", isAdmin, async (req, res) => {
+  app.get("/api/admin/delivery-events/:orderId", isStaff, async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
       if (isNaN(orderId)) {
@@ -582,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stock management routes (admin only)
-  app.get("/api/admin/stock-status", isAdmin, async (req, res) => {
+  app.get("/api/admin/stock-status", isStaff, async (req, res) => {
     try {
       const stockStatus = await storage.getProductsByStockStatus();
       res.json(stockStatus);
@@ -627,6 +636,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const galleryImage = await storage.createGalleryImage(imageData);
+      // Uploading straight to a product makes it that product's shop picture.
+      if (imageData.productId) {
+        await storage.updateProduct(imageData.productId, { image: galleryImage.imageUrl } as any);
+      }
       res.status(201).json(galleryImage);
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -648,6 +661,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productId: productId ? parseInt(productId) : null,
         category: productId ? 'product' : 'gallery'
       });
+      // Linking an image to a product makes it that product's picture in the shop.
+      if (productId && updated?.imageUrl) {
+        await storage.updateProduct(parseInt(productId), { image: updated.imageUrl } as any);
+      }
       res.json(updated);
     } catch (error) {
       console.error("Error linking image to product:", error);
@@ -718,15 +735,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve static images and uploads
-  app.use('/uploads', (req, res, next) => {
-    const filePath = path.join(process.cwd(), 'client', 'public', 'uploads', req.path);
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        res.status(404).json({ error: 'File not found' });
-      }
-    });
-  });
+  // Serve uploaded images (express.static blocks path traversal like /uploads/../..)
+  app.use(
+    "/uploads",
+    express.static(path.join(process.cwd(), "client", "public", "uploads"), { fallthrough: false, maxAge: "7d" }),
+  );
 
   const httpServer = createServer(app);
   return httpServer;

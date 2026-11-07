@@ -69,9 +69,7 @@ export function Inventory() {
 
   const acknowledgeAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      await apiRequest(`/api/inventory/alerts/${alertId}/acknowledge`, {
-        method: "PATCH",
-      });
+      await apiRequest("PATCH", `/api/inventory/alerts/${alertId}/acknowledge`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/alerts"] });
@@ -102,16 +100,12 @@ export function Inventory() {
 
   const adjustStockMutation = useMutation({
     mutationFn: async (adjustment: { productId: number; quantity: number; reason: string; notes?: string }) => {
-      await apiRequest("/api/inventory/adjust", {
-        method: "POST",
-        body: JSON.stringify(adjustment),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      await apiRequest("POST", "/api/inventory/adjust", adjustment);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stock-status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/movements"] });
       setAdjustmentForm({ quantity: 0, reason: '', notes: '' });

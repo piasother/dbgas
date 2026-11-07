@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="LPG pressure regulator">
+  <defs>
+    <linearGradient id="rgBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a90e2"/>
+      <stop offset="1" stop-color="#1b365d"/>
+    </linearGradient>
+    <linearGradient id="rgMetal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f4f6"/>
+      <stop offset=".5" stop-color="#d1d5db"/>
+      <stop offset="1" stop-color="#9ca3af"/>
+    </linearGradient>
+    <linearGradient id="rgBrass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset=".5" stop-color="#d4a017"/>
+      <stop offset="1" stop-color="#a16207"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#f8fafc"/>
+  <ellipse cx="200" cy="262" rx="140" ry="12" fill="#e5e7eb"/>
+
+  <!-- inlet nut (left) -->
+  <rect x="58" y="150" width="62" height="44" rx="6" fill="url(#rgBrass)" stroke="#92400e" stroke-width="2"/>
+  <g stroke="#92400e" stroke-width="2" opacity=".55">
+    <line x1="70" y1="152" x2="70" y2="192"/><line x1="80" y1="152" x2="80" y2="192"/>
+    <line x1="90" y1="152" x2="90" y2="192"/><line x1="100" y1="152" x2="100" y2="192"/>
+    <line x1="110" y1="152" x2="110" y2="192"/>
+  </g>
+  <rect x="40" y="160" width="22" height="24" rx="4" fill="url(#rgBrass)" stroke="#92400e" stroke-width="2"/>
+
+  <!-- body -->
+  <circle cx="200" cy="150" r="78" fill="url(#rgBody)" stroke="#12263f" stroke-width="3"/>
+  <circle cx="200" cy="150" r="60" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="2"/>
+  <rect x="118" y="160" width="164" height="38" rx="10" fill="url(#rgMetal)" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- on/off knob -->
+  <rect x="180" y="52" width="40" height="30" rx="6" fill="#ff6b35" stroke="#c2410c" stroke-width="2"/>
+  <rect x="192" y="40" width="16" height="16" rx="3" fill="#ff6b35" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- outlet nozzle (right) -->
+  <rect x="282" y="168" width="44" height="22" rx="4" fill="url(#rgMetal)" stroke="#6b7280" stroke-width="2"/>
+  <g fill="url(#rgMetal)" stroke="#6b7280" stroke-width="2">
+    <path d="M326 170 l14 4 v10 l-14 4 z"/>
+    <path d="M340 172 l12 3 v8 l-12 3 z"/>
+  </g>
+
+  <!-- label -->
+  <rect x="150" y="112" width="100" height="40" rx="6" fill="#ffffff" opacity=".95"/>
+  <text x="200" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1b365d">LPG</text>
+  <text x="200" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">REGULATOR</text>
+  <text x="200" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#374151">2.8 kPa</text>
+
+  <!-- safety badge -->
+  <circle cx="336" cy="64" r="30" fill="#059669" stroke="#065f46" stroke-width="3"/>
+  <text x="336" y="61" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#fff">SAFETY</text>
+  <text x="336" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#fff">CERTIFIED</text>
+</svg>

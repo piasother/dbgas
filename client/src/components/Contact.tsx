@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { LOCATIONS, PHONE, PHONE_DISPLAY, WHATSAPP_URL, EMAIL, mapUrl } from '@/lib/locations';
 
 export function Contact() {
   const { toast } = useToast();
@@ -19,7 +20,7 @@ export function Contact() {
     onSuccess: () => {
       toast({
         title: "Inquiry Sent Successfully",
-        description: "We'll get back to you within 2 hours during business hours.",
+        description: "Thank you — we'll get back to you as soon as possible during business hours.",
       });
       setFormData({ name: '', phone: '', inquiryType: '', message: '' });
     },
@@ -59,35 +60,50 @@ export function Contact() {
           <div className="lg:col-span-2 space-y-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-8">Get in Touch</h2>
             
-            <div className="flex justify-center">
-              <div className="bg-white text-gray-800 rounded-lg p-6 max-w-md">
-                <h5 className="flex items-center text-lg font-semibold mb-4">
-                  <i className="fas fa-map-marker-alt text-primary mr-3"></i>
-                  Bulawayo Office
-                </h5>
-                <p className="mb-2">Stand 12142A, Ascot Township<br/>Ascot Shopping Centre, Bulawayo</p>
-                <p><strong>Hours:</strong> Mon-Fri 8AM-6PM, Sun 8AM-1PM<br/>Closed on Saturday</p>
-              </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {LOCATIONS.map((loc) => (
+                <div key={loc.label} className="bg-white text-gray-800 rounded-lg p-5 flex flex-col">
+                  <i className={`${loc.icon} text-primary text-xl mb-3`}></i>
+                  <h5 className="text-base font-semibold text-primary">{loc.label}</h5>
+                  <p className="text-sm text-gray-500 mb-3">{loc.sub}</p>
+                  <p className="text-sm leading-relaxed mb-3">
+                    {loc.lines.map((line) => (
+                      <span key={line}>{line}<br /></span>
+                    ))}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    <i className="fas fa-clock mr-2"></i>{loc.hours}
+                  </p>
+                  <a
+                    href={mapUrl(loc.mapQuery)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary font-semibold hover:underline mt-auto"
+                  >
+                    <i className="fas fa-directions mr-2"></i>Get directions
+                  </a>
+                </div>
+              ))}
             </div>
             
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <h6 className="flex items-center font-semibold mb-2">
-                  <i className="fas fa-phone mr-3"></i>Emergency
+                  <i className="fas fa-phone mr-3"></i>Phone
                 </h6>
-                <p>0713314920</p>
+                <p><a href={`tel:${PHONE}`} className="hover:underline">{PHONE_DISPLAY}</a></p>
               </div>
               <div>
                 <h6 className="flex items-center font-semibold mb-2">
                   <i className="fas fa-envelope mr-3"></i>Email
                 </h6>
-                <p>info@dbgas.co.zw</p>
+                <p><a href={`mailto:${EMAIL}`} className="hover:underline">{EMAIL}</a></p>
               </div>
               <div>
                 <h6 className="flex items-center font-semibold mb-2">
                   <i className="fab fa-whatsapp mr-3"></i>WhatsApp
                 </h6>
-                <p>0713314920</p>
+                <p><a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:underline">{PHONE_DISPLAY}</a></p>
               </div>
             </div>
           </div>
@@ -128,7 +144,8 @@ export function Contact() {
                     <option value="residential">Residential Supply</option>
                     <option value="commercial">Commercial Solutions</option>
                     <option value="installation">Installation Service</option>
-                    <option value="emergency">Emergency Service</option>
+                    <option value="wholesale">Wholesale / Bulk LPG</option>
+                    <option value="reticulation">Laboratory Gas Reticulation</option>
                   </select>
                   <textarea 
                     name="message"

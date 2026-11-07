@@ -56,15 +56,25 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="product-card bg-white h-full">
-      <img 
-        src={product.image} 
-        alt={product.name} 
-        className="w-full h-48 object-cover rounded-t-2xl"
-      />
-      <div className="p-6">
+    <div className="product-card bg-white h-full flex flex-col overflow-hidden">
+      <div className="bg-slate-50 h-48 flex items-center justify-center">
+        <img
+          src={product.image}
+          alt={product.name}
+          loading="lazy"
+          className="max-h-full max-w-full object-contain"
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (!img.dataset.fallback) {
+              img.dataset.fallback = "1";
+              img.src = "/images/lpg-9kg-cylinder.svg";
+            }
+          }}
+        />
+      </div>
+      <div className="p-6 flex flex-col flex-1">
         {product.badge && (
-          <span className="badge-safety inline-block mb-3">{product.badge}</span>
+          <span className="badge-safety inline-block self-start mb-3">{product.badge}</span>
         )}
         <h5 className="text-xl font-semibold mb-3">{product.name}</h5>
         <p className="text-gray-600 mb-4">{product.description}</p>
@@ -104,12 +114,12 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         
-        <div className="flex justify-between items-center">
-          <span className="price-tag">${(product.price / 100).toFixed(2)}</span>
+        <div className="mt-auto flex flex-col gap-3">
+          <span className="price-tag whitespace-nowrap">${(product.price / 100).toFixed(2)}</span>
           <button 
             onClick={handleAddToCart}
             disabled={isAdding || product.stockQuantity === 0}
-            className={`btn-primary px-4 py-2 rounded-lg font-semibold inline-flex items-center ${
+            className={`btn-primary w-full px-4 py-2.5 rounded-lg font-semibold inline-flex items-center justify-center whitespace-nowrap ${
               isAdding ? 'opacity-75 cursor-not-loading' : ''
             } ${product.stockQuantity === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >

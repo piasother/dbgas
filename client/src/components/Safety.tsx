@@ -1,4 +1,6 @@
+import { useSiteImage } from "@/hooks/useSiteImages";
 export function Safety() {
+  const safetyImage = useSiteImage("safety");
   const certifications = [
     {
       icon: "fas fa-shield-alt",
@@ -21,7 +23,7 @@ export function Safety() {
     { icon: "fas fa-certificate", title: "ZERA Licensed", subtitle: "Energy Regulatory Authority" },
     { icon: "fas fa-leaf", title: "EMA Certified", subtitle: "Environmental Management" },
     { icon: "fas fa-city", title: "City Licensed", subtitle: "Bulawayo City Council" },
-    { icon: "fas fa-shield-alt", title: "ISO Compliant", subtitle: "International Standards" }
+    { icon: "fas fa-hard-hat", title: "Trained Technicians", subtitle: "Safe Installations" }
   ];
 
   const resources = [
@@ -71,9 +73,11 @@ export function Safety() {
             
             <div className="lg:col-span-1">
               <img 
-                src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Safety Equipment" 
-                className="w-full h-auto rounded-2xl shadow-lg"
+                src={safetyImage}
+                alt="LPG safety equipment: fire extinguisher, gas detector and warning signs"
+                className="w-full h-auto rounded-3xl shadow-lg"
+                width={400}
+                height={520}
               />
             </div>
           </div>

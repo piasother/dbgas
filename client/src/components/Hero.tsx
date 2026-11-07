@@ -1,6 +1,8 @@
+import { useSiteImage } from "@/hooks/useSiteImages";
 import dbGasLogo from "@assets/F2636034-1A6C-48F3-81E1-8BD700485FD6_1749105674186.png";
 
 export function Hero() {
+  const heroImage = useSiteImage("hero");
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -27,7 +29,7 @@ export function Hero() {
               Fueling Zimbabwe Safely — From Homes to Industry
             </h1>
             <p className="text-lg md:text-xl text-blue-100">
-              Reliable LPG supply across Zimbabwe with 2-hour delivery, professional installations, and ZERA-compliant safety standards.
+              Reliable LPG supply across Zimbabwe with timely delivery, professional installations, and ZERA-compliant safety standards.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
@@ -55,11 +57,13 @@ export function Hero() {
             </div>
           </div>
           
-          <div className="text-center">
-            <img 
-              src="/api/static/images/lpg-storage-facility-zimbabwe.jpg" 
-              alt="DB Gas LPG Storage Facility in Zimbabwe" 
-              className="w-full h-auto rounded-2xl shadow-2xl"
+          <div className="hidden lg:block">
+            <img
+              src={heroImage}
+              alt="DB Gas LPG bulk storage, tanker and cylinders"
+              className="w-full h-auto rounded-3xl shadow-2xl object-cover aspect-[640/460]"
+              width={640}
+              height={460}
             />
           </div>
         </div>

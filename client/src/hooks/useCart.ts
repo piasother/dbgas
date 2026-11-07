@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Product } from '@shared/schema';
 
 export interface CartItem {
@@ -6,48 +6,68 @@ export interface CartItem {
   quantity: number;
 }
 
-export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
+// One cart shared by every component (product cards, the floating cart button,
+// the cart drawer, checkout). Previously each component had its own private copy,
+// so "Add to Cart" never showed up anywhere else.
+const STORAGE_KEY = 'db-gas-cart';
+const MAX_QTY = 100;
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('db-gas-cart');
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Failed to parse saved cart:', error);
-      }
+function load(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((i) => i && i.product && typeof i.product.id === 'number' && i.quantity > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+let items: CartItem[] = typeof window !== 'undefined' ? load() : [];
+const listeners = new Set<() => void>();
+
+function setItems(next: CartItem[]) {
+  items = next;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    /* storage full or blocked - cart still works for this visit */
+  }
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+// Keep several open tabs in step.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY) {
+      items = load();
+      listeners.forEach((l) => l());
     }
-  }, []);
+  });
+}
 
-  // Save cart to localStorage whenever items change
-  useEffect(() => {
-    localStorage.setItem('db-gas-cart', JSON.stringify(items));
-  }, [items]);
+const getSnapshot = () => items;
+
+export function useCart() {
+  const current = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const addItem = (product: Product, quantity: number = 1) => {
-    console.log('useCart addItem called with:', product.name, 'quantity:', quantity);
-    setItems(currentItems => {
-      console.log('Current cart items:', currentItems.length);
-      const existingItem = currentItems.find(item => item.product.id === product.id);
-      
-      if (existingItem) {
-        console.log('Updating existing item');
-        const updated = currentItems.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-        console.log('Updated cart items:', updated.length);
-        return updated;
-      } else {
-        console.log('Adding new item to cart');
-        const newItems = [...currentItems, { product, quantity }];
-        console.log('New cart items:', newItems.length);
-        return newItems;
-      }
-    });
+    const existing = items.find((i) => i.product.id === product.id);
+    if (existing) {
+      setItems(
+        items.map((i) =>
+          i.product.id === product.id ? { ...i, product, quantity: Math.min(MAX_QTY, i.quantity + quantity) } : i,
+        ),
+      );
+    } else {
+      setItems([...items, { product, quantity: Math.min(MAX_QTY, quantity) }]);
+    }
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
@@ -55,41 +75,17 @@ export function useCart() {
       removeItem(productId);
       return;
     }
-
-    setItems(currentItems =>
-      currentItems.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      )
-    );
+    setItems(items.map((i) => (i.product.id === productId ? { ...i, quantity: Math.min(MAX_QTY, quantity) } : i)));
   };
 
   const removeItem = (productId: number) => {
-    setItems(currentItems =>
-      currentItems.filter(item => item.product.id !== productId)
-    );
+    setItems(items.filter((i) => i.product.id !== productId));
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
+  const clearCart = () => setItems([]);
 
-  const getTotalItems = () => {
-    return items.reduce((total, item) => total + item.quantity, 0);
-  };
+  const getTotalItems = () => current.reduce((t, i) => t + i.quantity, 0);
+  const getTotalPrice = () => current.reduce((t, i) => t + i.product.price * i.quantity, 0);
 
-  const getTotalPrice = () => {
-    return items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-  };
-
-  return {
-    items,
-    addItem,
-    updateQuantity,
-    removeItem,
-    clearCart,
-    getTotalItems,
-    getTotalPrice,
-  };
+  return { items: current, addItem, updateQuantity, removeItem, clearCart, getTotalItems, getTotalPrice };
 }

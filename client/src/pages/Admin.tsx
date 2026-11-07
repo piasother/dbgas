@@ -1,3 +1,8 @@
+import { ProductsManager } from "@/components/admin/ProductsManager";
+import { OrdersManager } from "@/components/admin/OrdersManager";
+import { InquiriesManager } from "@/components/admin/InquiriesManager";
+import { SiteImagesManager } from "@/components/admin/SiteImagesManager";
+import { EmailTest } from "@/components/admin/EmailTest";
 import { Layout } from "@/components/Layout";
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +11,18 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import type { User, AdminSetting, EmailSetting, Order, Product, DeliveryEvent, GalleryImage } from "@shared/schema";
+
+/** Pull the server's error message out of an apiRequest error ("403: {\"error\":...}"). */
+function serverError(err: any, fallback: string) {
+  const text = String(err?.message || '');
+  const json = text.slice(text.indexOf(':') + 1).trim();
+  try {
+    const parsed = JSON.parse(json);
+    return parsed.error || parsed.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export function Admin() {
   const { user, isLoading: authLoading } = useAuth();
@@ -39,11 +56,15 @@ export function Admin() {
   const intervalRefs = useRef<{ [key: string]: NodeJS.Timeout | null }>({});
 
   // Check if user is admin (you can modify this logic as needed)
-  const isAdmin = (user as any)?.email === "andrewsbulle@gmail.com";
+  const myRole = (user as any)?.role as string | undefined;
+  const isAdmin = myRole === "admin";
+  // Staff can run orders, deliveries and stock; admins can do everything.
+  const isStaff = isAdmin || myRole === "staff";
+  const myId = (user as any)?.id as string | undefined;
 
-  // Redirect if not admin
+  // Redirect if not staff/admin
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
+    if (!authLoading && (!user || !isStaff)) {
       toast({
         title: "Access Denied",
         description: "You need admin privileges to access this page.",
@@ -51,7 +72,7 @@ export function Admin() {
       });
       window.location.href = "/";
     }
-  }, [user, authLoading, isAdmin, toast]);
+  }, [user, authLoading, isStaff, toast]);
 
   // Fetch admin data
   const { data: users = [] } = useQuery<User[]>({
@@ -61,12 +82,12 @@ export function Admin() {
 
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ['/api/admin/orders'],
-    enabled: isAdmin,
+    enabled: isStaff,
   });
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['/api/admin/products'],
-    enabled: isAdmin,
+    enabled: isStaff,
   });
 
   const { data: emailSettings } = useQuery<EmailSetting>({
@@ -76,7 +97,7 @@ export function Admin() {
 
   const { data: deliveryEvents = [] } = useQuery<DeliveryEvent[]>({
     queryKey: ['/api/admin/delivery-events', selectedOrder?.id],
-    enabled: isAdmin && !!selectedOrder,
+    enabled: isStaff && !!selectedOrder,
   });
 
   const { data: galleryImages = [] } = useQuery<GalleryImage[]>({
@@ -86,7 +107,7 @@ export function Admin() {
 
   const { data: stockStatus } = useQuery<{inStock: Product[], lowStock: Product[], outOfStock: Product[]}>({
     queryKey: ['/api/admin/stock-status'],
-    enabled: isAdmin,
+    enabled: isStaff,
   });
 
   // Update email config when data is loaded
@@ -110,10 +131,38 @@ export function Admin() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({ title: "Success", description: "User status updated successfully" });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
+    onError: (err: any) => {
+      toast({ title: "Error", description: serverError(err, "Failed to update user status"), variant: "destructive" });
     },
   });
+
+  // Change user role mutation (user / staff / admin)
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await apiRequest("PATCH", `/api/admin/users/${userId}/role`, { role });
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      const label = vars.role === 'admin' ? 'Admin' : vars.role === 'staff' ? 'Staff' : 'Customer';
+      toast({ title: "Role updated", description: `User is now: ${label}. It takes effect on their next page load.` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: serverError(err, "Failed to update role"), variant: "destructive" });
+    },
+  });
+
+  const handleUserRoleChange = (target: any, newRole: string) => {
+    const name = target.email || 'this user';
+    const warning =
+      newRole === 'admin'
+        ? `Make ${name} an ADMIN?\n\nAdmins can see all customers and orders, change prices and stock, manage users and email settings.`
+        : newRole === 'staff'
+        ? `Make ${name} STAFF?\n\nStaff can view and update orders, deliveries and stock, but cannot manage users, prices or settings.`
+        : `Remove ${name}'s staff/admin access and make them a normal customer?`;
+    if (window.confirm(warning)) {
+      updateRoleMutation.mutate({ userId: target.id, role: newRole });
+    }
+  };
 
   // Update email settings mutation
   const updateEmailMutation = useMutation({
@@ -224,24 +273,18 @@ export function Admin() {
     updateUserMutation.mutate({ userId, status: newStatus });
   };
 
-  if (authLoading) {
-    return <Layout><div className="min-h-screen flex items-center justify-center">Loading...</div></Layout>;
-  }
-
-  if (!user || (user as any).role !== 'admin') {
-    return <Layout><div className="min-h-screen flex items-center justify-center">Access Denied</div></Layout>;
-  }
-
-  const tabs = [
-    { id: 'dashboard', name: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-    { id: 'users', name: 'Users', icon: 'fas fa-users' },
-    { id: 'orders', name: 'Orders', icon: 'fas fa-shopping-cart' },
-    { id: 'delivery', name: 'Delivery Tracking', icon: 'fas fa-truck' },
-    { id: 'products', name: 'Products', icon: 'fas fa-box' },
-    { id: 'stock', name: 'Stock Management', icon: 'fas fa-warehouse' },
-    { id: 'gallery', name: 'Gallery Manager', icon: 'fas fa-images' },
-    { id: 'email', name: 'Email Settings', icon: 'fas fa-envelope' }
+  const allTabs = [
+    { id: 'dashboard', name: 'Dashboard', icon: 'fas fa-tachometer-alt', staff: true },
+    { id: 'users', name: 'Users', icon: 'fas fa-users', staff: false },
+    { id: 'orders', name: 'Orders', icon: 'fas fa-shopping-cart', staff: true },
+    { id: 'inquiries', name: 'Enquiries', icon: 'fas fa-inbox', staff: true },
+    { id: 'delivery', name: 'Delivery Tracking', icon: 'fas fa-truck', staff: true },
+    { id: 'products', name: 'Products', icon: 'fas fa-box', staff: false },
+    { id: 'stock', name: 'Stock Management', icon: 'fas fa-warehouse', staff: true },
+    { id: 'gallery', name: 'Gallery Manager', icon: 'fas fa-images', staff: false },
+    { id: 'email', name: 'Email Settings', icon: 'fas fa-envelope', staff: false }
   ];
+  const tabs = isAdmin ? allTabs : allTabs.filter((t) => t.staff);
 
   const stats = {
     totalUsers: users.length,
@@ -307,6 +350,15 @@ export function Admin() {
     };
   }, [users.length, orders.length, products.length, activeTab, users, orders, products]);
 
+  // Early returns must come after every hook above (React rule of hooks).
+  if (authLoading) {
+    return <Layout><div className="min-h-screen flex items-center justify-center">Loading...</div></Layout>;
+  }
+
+  if (!user || !isStaff) {
+    return <Layout><div className="min-h-screen flex items-center justify-center">Access Denied</div></Layout>;
+  }
+
   // AnimatedWidget component
   const AnimatedWidget = ({ 
     title, 
@@ -359,8 +411,8 @@ export function Admin() {
   return (
     <Layout>
       <PageHeader 
-        title="Admin Dashboard" 
-        description="Manage DB Gas website and user accounts"
+        title={isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
+        description={isAdmin ? "Manage DB Gas website and user accounts" : "Manage orders, deliveries and stock"}
       />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -508,7 +560,12 @@ export function Admin() {
 
               {activeTab === 'users' && (
                 <div>
-                  <h2 className="text-2xl font-bold mb-6">User Management</h2>
+                  <h2 className="text-2xl font-bold mb-2">User Management</h2>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Use <strong>Role</strong> to give access: <strong>Customer</strong> (shop only),{' '}
+                    <strong>Staff</strong> (orders, deliveries and stock), <strong>Admin</strong> (everything, including users, prices and settings).
+                    New staff must register on the website first.
+                  </p>
                   <div className="overflow-x-auto">
                     <table className="min-w-full bg-white">
                       <thead className="bg-gray-50">
@@ -517,7 +574,7 @@ export function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -525,11 +582,12 @@ export function Admin() {
                           <tr key={userData.id}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <img 
-                                  className="h-10 w-10 rounded-full" 
-                                  src={userData.profileImageUrl || '/api/placeholder/40/40'} 
-                                  alt="" 
-                                />
+                                <span
+                                  aria-hidden="true"
+                                  className="h-10 w-10 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center uppercase"
+                                >
+                                  {((userData.firstName || userData.email || '?')[0])}
+                                </span>
                                 <div className="ml-4">
                                   <div className="text-sm font-medium text-gray-900">
                                     {userData.firstName} {userData.lastName}
@@ -541,11 +599,32 @@ export function Admin() {
                               {userData.email}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                (userData as any).role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {(userData as any).role}
-                              </span>
+                              {(userData as any).isOwner || userData.id === myId ? (
+                                <span
+                                  className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800"
+                                  title={(userData as any).isOwner ? 'Owner account - always admin' : "You can't change your own role"}
+                                >
+                                  {(userData as any).isOwner ? 'Owner (admin)' : 'Admin (you)'}
+                                </span>
+                              ) : (
+                                <select
+                                  aria-label={`Role for ${userData.email}`}
+                                  value={(userData as any).role || 'user'}
+                                  onChange={(e) => handleUserRoleChange(userData, e.target.value)}
+                                  disabled={updateRoleMutation.isPending}
+                                  className={`border rounded px-2 py-1 text-sm font-medium ${
+                                    (userData as any).role === 'admin'
+                                      ? 'border-red-200 bg-red-50 text-red-800'
+                                      : (userData as any).role === 'staff'
+                                      ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                      : 'border-gray-300 bg-white text-gray-700'
+                                  }`}
+                                >
+                                  <option value="user">Customer</option>
+                                  <option value="staff">Staff</option>
+                                  <option value="admin">Admin</option>
+                                </select>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -561,7 +640,7 @@ export function Admin() {
                                 value={(userData as any).status || 'active'}
                                 onChange={(e) => handleUserStatusChange(userData.id, e.target.value)}
                                 className="border border-gray-300 rounded px-2 py-1 text-sm"
-                                disabled={(userData as any).role === 'admin'}
+                                disabled={(userData as any).isOwner || userData.id === myId}
                               >
                                 <option value="active">Active</option>
                                 <option value="suspended">Suspended</option>
@@ -576,52 +655,9 @@ export function Admin() {
                 </div>
               )}
 
-              {activeTab === 'orders' && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">Order Management</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {orders.map((order) => (
-                          <tr key={order.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              #{order.id}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{order.customerName}</div>
-                              <div className="text-sm text-gray-500">{order.phoneNumber}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              ${(order.total / 100).toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+              {activeTab === 'orders' && <OrdersManager orders={orders} isAdmin={isAdmin} />}
+
+              {activeTab === 'inquiries' && <InquiriesManager />}
 
               {activeTab === 'delivery' && (
                 <div>
@@ -729,7 +765,12 @@ export function Admin() {
 
               {activeTab === 'stock' && (
                 <div>
-                  <h2 className="text-2xl font-bold mb-6">Stock Management</h2>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                    <h2 className="text-2xl font-bold">Stock Management</h2>
+                    <a href="/inventory" className="btn-primary px-4 py-2 rounded-lg font-semibold inline-flex items-center">
+                      <i className="fas fa-boxes mr-2"></i>Adjust stock levels
+                    </a>
+                  </div>
                   
                   <div className="grid md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-green-50 p-6 rounded-lg">
@@ -888,50 +929,7 @@ export function Admin() {
                     </div>
                   </div>
 
-                  {/* Specific Image Management Sections */}
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold mb-4">Home Page Images</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <h4 className="font-medium mb-2">Hero Background</h4>
-                        <img 
-                          src="/images/hero-background-dummy.svg" 
-                          alt="Hero Background"
-                          className="w-full h-32 object-cover rounded mb-2"
-                        />
-                        <button
-                          onClick={() => setEditingImage({ 
-                            type: 'hero', 
-                            current: '/api/static/images/lpg-storage-facility-zimbabwe.jpg',
-                            title: 'Hero Background Image'
-                          })}
-                          className="text-sm text-primary hover:text-blue-700"
-                        >
-                          <i className="fas fa-edit mr-1"></i>
-                          Update Image
-                        </button>
-                      </div>
-                      <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <h4 className="font-medium mb-2">Installation Team</h4>
-                        <img 
-                          src="/images/installation-team-dummy.svg" 
-                          alt="Installation Team"
-                          className="w-full h-32 object-cover rounded mb-2"
-                        />
-                        <button
-                          onClick={() => setEditingImage({ 
-                            type: 'installation', 
-                            current: '/api/static/images/lpg-installation-team-zimbabwe.jpg',
-                            title: 'Installation Team Image'
-                          })}
-                          className="text-sm text-primary hover:text-blue-700"
-                        >
-                          <i className="fas fa-edit mr-1"></i>
-                          Update Image
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <SiteImagesManager />
 
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold mb-4">Product Images</h3>
@@ -1184,175 +1182,12 @@ export function Admin() {
                 </div>
               )}
 
-              {activeTab === 'products' && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">Product Management</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead Time</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {products.map((product) => (
-                          <tr key={product.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <img className="h-10 w-10 rounded object-cover" src={product.image} alt="" />
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {product.category}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              ${(product.price / 100).toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{product.stockQuantity}</div>
-                              {product.stockQuantity <= product.lowStockThreshold && (
-                                <div className="text-xs text-red-600">Low Stock</div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {(product as any).leadTime || 0} days
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                                {product.stockQuantity > 0 ? 'In Stock' : 
-                                 `Out of Stock (${(product as any).leadTime || 0}d lead time)`}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <button
-                                onClick={() => setEditingProduct(product)}
-                                className="text-primary hover:text-blue-700 mr-3"
-                              >
-                                <i className="fas fa-edit mr-1"></i>
-                                Edit
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Product Edit Modal */}
-                  {editingProduct && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4">
-                        <h3 className="text-lg font-semibold mb-4">Edit Product</h3>
-                        <form onSubmit={(e) => {
-                          e.preventDefault();
-                          const formData = new FormData(e.target as HTMLFormElement);
-                          const updates = {
-                            name: formData.get('name'),
-                            description: formData.get('description'),
-                            price: parseInt(formData.get('price') as string) * 100, // Convert to cents
-                            stockQuantity: parseInt(formData.get('stockQuantity') as string),
-                            lowStockThreshold: parseInt(formData.get('lowStockThreshold') as string),
-                            image: formData.get('image')
-                          };
-                          updateProductMutation.mutate({ productId: editingProduct.id, updates });
-                        }}>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                              <input
-                                name="name"
-                                type="text"
-                                defaultValue={editingProduct.name}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                              <textarea
-                                name="description"
-                                defaultValue={editingProduct.description}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                rows={3}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-                              <input
-                                name="price"
-                                type="number"
-                                step="0.01"
-                                defaultValue={(editingProduct.price / 100).toFixed(2)}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                              <input
-                                name="stockQuantity"
-                                type="number"
-                                defaultValue={editingProduct.stockQuantity}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
-                              <input
-                                name="lowStockThreshold"
-                                type="number"
-                                defaultValue={editingProduct.lowStockThreshold}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                              <input
-                                name="image"
-                                type="text"
-                                defaultValue={editingProduct.image}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end space-x-3 mt-6">
-                            <button
-                              type="button"
-                              onClick={() => setEditingProduct(null)}
-                              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="submit"
-                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700"
-                              disabled={updateProductMutation.isPending}
-                            >
-                              {updateProductMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              {activeTab === 'products' && isAdmin && <ProductsManager products={products} />}
 
               {activeTab === 'email' && (
                 <div>
                   <h2 className="text-2xl font-bold mb-6">Email Configuration</h2>
+                  <EmailTest />
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                     <div className="flex items-center">
                       <i className="fas fa-info-circle text-yellow-600 mr-2"></i>
@@ -1373,7 +1208,7 @@ export function Admin() {
                           value={emailConfig.fromEmail}
                           onChange={(e) => setEmailConfig({...emailConfig, fromEmail: e.target.value})}
                           className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="info@dbgas.co.zw"
+                          placeholder="accounts@drewbulle.co.zw"
                         />
                       </div>
                       
@@ -1399,7 +1234,7 @@ export function Admin() {
                           value={emailConfig.contactFormRecipient}
                           onChange={(e) => setEmailConfig({...emailConfig, contactFormRecipient: e.target.value})}
                           className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="info@dbgas.co.zw"
+                          placeholder="accounts@drewbulle.co.zw"
                         />
                         <p className="text-sm text-gray-500 mt-1">Where contact form submissions are sent</p>
                       </div>

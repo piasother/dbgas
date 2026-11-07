@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520" role="img" aria-label="LPG safety equipment: fire extinguisher, gas detector and warning signs">
+  <defs>
+    <linearGradient id="seBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b365d"/>
+      <stop offset="1" stop-color="#2a5a8f"/>
+    </linearGradient>
+    <linearGradient id="seRed" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b91c1c"/>
+      <stop offset=".45" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#991b1b"/>
+    </linearGradient>
+    <clipPath id="seCard"><rect width="400" height="520" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#seCard)">
+    <rect width="400" height="520" fill="url(#seBg)"/>
+    <circle cx="330" cy="70" r="110" fill="#fff" opacity=".05"/>
+
+    <!-- warning sign -->
+    <g transform="translate(200 120)">
+      <path d="M0 -78 L84 66 H-84 Z" fill="#facc15" stroke="#1f2937" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M0 -20 c-14 18 -20 30 -20 42 a20 20 0 0 0 40 0 c0 -12 -6 -24 -20 -42 z" fill="#1f2937"/>
+      <path d="M0 8 c-6 8 -8 13 -8 18 a8 8 0 0 0 16 0 c0 -5 -2 -10 -8 -18 z" fill="#facc15"/>
+    </g>
+    <text x="200" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#facc15">HIGHLY FLAMMABLE · NO SMOKING</text>
+
+    <!-- fire extinguisher -->
+    <g transform="translate(80 250)">
+      <rect x="20" y="40" width="70" height="190" rx="28" fill="url(#seRed)" stroke="#7f1d1d" stroke-width="3"/>
+      <rect x="28" y="110" width="54" height="56" rx="6" fill="#fff"/>
+      <text x="55" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#991b1b">DCP</text>
+      <text x="55" y="152" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#374151">9 kg</text>
+      <rect x="44" y="18" width="22" height="24" fill="#374151"/>
+      <path d="M30 18 H82 l8 -10" fill="none" stroke="#111827" stroke-width="7" stroke-linecap="round"/>
+      <path d="M66 26 C 110 30, 112 90, 96 120" fill="none" stroke="#111827" stroke-width="7" stroke-linecap="round"/>
+    </g>
+
+    <!-- gas detector -->
+    <g transform="translate(230 270)">
+      <rect x="0" y="0" width="110" height="130" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+      <rect x="14" y="16" width="82" height="40" rx="6" fill="#064e3b"/>
+      <text x="55" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#34d399">0% LEL</text>
+      <circle cx="34" cy="82" r="9" fill="#22c55e"/><circle cx="55" cy="82" r="9" fill="#facc15" opacity=".35"/><circle cx="76" cy="82" r="9" fill="#ef4444" opacity=".35"/>
+      <g fill="#94a3b8"><rect x="22" y="104" width="66" height="4" rx="2"/><rect x="22" y="112" width="66" height="4" rx="2"/></g>
+      <text x="55" y="152" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">GAS DETECTOR</text>
+    </g>
+
+    <!-- floor + caption -->
+    <rect y="486" width="400" height="34" fill="#12263f"/>
+    <text x="200" y="508" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#fff">Safety equipment on every installation</text>
+  </g>
+</svg>

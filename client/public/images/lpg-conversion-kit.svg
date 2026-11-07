@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="LPG appliance conversion kit">
+  <defs>
+    <linearGradient id="ckCase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a4f7f"/>
+      <stop offset="1" stop-color="#1b365d"/>
+    </linearGradient>
+    <linearGradient id="ckBrass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset=".5" stop-color="#d4a017"/>
+      <stop offset="1" stop-color="#a16207"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#f8fafc"/>
+  <ellipse cx="200" cy="262" rx="150" ry="12" fill="#e5e7eb"/>
+
+  <!-- open case -->
+  <rect x="70" y="120" width="260" height="130" rx="12" fill="url(#ckCase)" stroke="#12263f" stroke-width="3"/>
+  <rect x="84" y="134" width="232" height="102" rx="8" fill="#e5e7eb"/>
+  <path d="M84 120 L100 56 H300 L316 120 Z" fill="#2a4f7f" stroke="#12263f" stroke-width="3"/>
+  <rect x="180" y="44" width="40" height="12" rx="6" fill="#12263f"/>
+  <text x="200" y="98" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#fff">LPG CONVERSION KIT</text>
+
+  <!-- jets / nozzles -->
+  <g stroke="#92400e" stroke-width="1.5" fill="url(#ckBrass)">
+    <rect x="100" y="148" width="14" height="30" rx="3"/><polygon points="100,148 114,148 107,140"/>
+    <rect x="122" y="148" width="14" height="30" rx="3"/><polygon points="122,148 136,148 129,140"/>
+    <rect x="144" y="148" width="14" height="30" rx="3"/><polygon points="144,148 158,148 151,140"/>
+    <rect x="166" y="148" width="14" height="30" rx="3"/><polygon points="166,148 180,148 173,140"/>
+  </g>
+  <!-- injector bar -->
+  <rect x="100" y="196" width="80" height="22" rx="5" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+  <circle cx="116" cy="207" r="5" fill="#4b5563"/><circle cx="140" cy="207" r="5" fill="#4b5563"/><circle cx="164" cy="207" r="5" fill="#4b5563"/>
+
+  <!-- spanner -->
+  <g transform="translate(250 190) rotate(-30)">
+    <rect x="-46" y="-6" width="80" height="12" rx="6" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+    <path d="M34 -16 a16 16 0 1 1 0 32 l0 -9 l-8 0 l0 -14 l8 0 z" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+  </g>
+  <!-- orange regulator -->
+  <circle cx="258" cy="160" r="18" fill="#ff6b35" stroke="#c2410c" stroke-width="2"/>
+  <rect x="274" y="155" width="26" height="10" rx="3" fill="#d1d5db" stroke="#6b7280" stroke-width="1.5"/>
+
+  <!-- universal badge -->
+  <circle cx="340" cy="60" r="30" fill="#059669" stroke="#065f46" stroke-width="3"/>
+  <text x="340" y="64" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#fff">UNIVERSAL</text>
+</svg>

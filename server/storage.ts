@@ -111,9 +111,9 @@ export class DatabaseStorage implements IStorage {
       {
         name: "9kg Cylinder Refill",
         description: "Perfect for small households and apartments. Clean burning and efficient.",
-        price: 1100, // $11.00 in cents
+        price: 1755, // 9kg x $1.95/kg
         category: "lpg",
-        image: "/images/lpg-9kg-cylinder.svg",
+        image: "/images/db-gas-9kg.jpg",
         badge: "ZERA Approved",
         inStock: true,
         stockQuantity: 150,
@@ -125,9 +125,9 @@ export class DatabaseStorage implements IStorage {
       {
         name: "19kg Cylinder Refill",
         description: "Ideal for families and medium-sized businesses. Long-lasting supply.",
-        price: 2200, // $22.00 in cents
+        price: 3705, // 19kg x $1.95/kg
         category: "lpg",
-        image: "/images/lpg-19kg-cylinder.svg",
+        image: "/images/db-gas-19kg.jpg",
         badge: "Most Popular",
         inStock: true,
         stockQuantity: 85,
@@ -141,7 +141,7 @@ export class DatabaseStorage implements IStorage {
         description: "Heavy-duty cylinder for commercial use. Includes safety features.",
         price: 9500, // $95.00 in cents
         category: "lpg",
-        image: "/images/lpg-48kg-cylinder.svg",
+        image: "/images/db-gas-48kg.jpg",
         badge: "Commercial Grade",
         inStock: true,
         stockQuantity: 25,
@@ -155,7 +155,7 @@ export class DatabaseStorage implements IStorage {
         description: "Professional-grade empty cylinder with dual valve system for safety.",
         price: 6000, // $60.00 in cents
         category: "lpg",
-        image: "/images/lpg-48kg-empty-cylinder.svg",
+        image: "/images/db-gas-48kg-dual.jpg",
         badge: "Dual Valve",
         inStock: true,
         stockQuantity: 12,
@@ -169,7 +169,7 @@ export class DatabaseStorage implements IStorage {
         description: "High-quality pressure regulator for safe gas flow control.",
         price: 1800, // $18.00 in cents
         category: "accessories",
-        image: "https://images.unsplash.com/photo-1609696942946-a2cf2be57815?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/images/lpg-regulator.svg",
         badge: "Safety Certified",
         inStock: true,
         stockQuantity: 45,
@@ -183,7 +183,7 @@ export class DatabaseStorage implements IStorage {
         description: "Durable, flexible hose for connecting appliances to gas supply.",
         price: 600, // $6.00 in cents
         category: "accessories",
-        image: "https://images.unsplash.com/photo-1619983081563-430f63602796?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/images/lpg-hose.svg",
         badge: "1.5m Length",
         inStock: true,
         stockQuantity: 8,
@@ -197,7 +197,7 @@ export class DatabaseStorage implements IStorage {
         description: "Complete kit for converting appliances to LPG operation.",
         price: 2500, // $25.00 in cents
         category: "accessories",
-        image: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        image: "/images/lpg-conversion-kit.svg",
         badge: "Universal",
         inStock: true,
         stockQuantity: 22,
@@ -213,7 +213,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProducts(): Promise<Product[]> {
     await this.initializeProducts();
-    return await db.select().from(products);
+    return await db.select().from(products).orderBy(products.id);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {

@@ -1,3 +1,4 @@
+import { BookInstallation } from './BookInstallation';
 import { useQuery } from '@tanstack/react-query';
 import type { Product } from '@shared/schema';
 import { ProductCard } from './ProductCard';
@@ -45,20 +46,20 @@ export function Accessories() {
             <ProductCard key={product.id} product={product} />
           ))}
           
-          <div className="bg-white rounded-2xl p-8 text-center">
+          <div className="product-card bg-white p-8 text-center flex flex-col h-full">
             <div className="feature-icon w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl">
               <i className="fas fa-wrench"></i>
             </div>
             <h5 className="text-xl font-semibold mb-6">Professional Installation</h5>
             <p className="text-gray-600 mb-4">Get expert installation services for all your LPG accessories</p>
-            <div className="space-y-2 text-left">
+            <div className="space-y-2 text-left mb-6 mx-auto">
               <p className="flex items-center"><i className="fas fa-check text-green-500 mr-3"></i>Certified technicians</p>
               <p className="flex items-center"><i className="fas fa-check text-green-500 mr-3"></i>Safety compliance</p>
               <p className="flex items-center"><i className="fas fa-check text-green-500 mr-3"></i>Warranty included</p>
             </div>
-            <a href="https://wa.me/263713314920" className="btn-primary mt-4 inline-block px-6 py-2 rounded-lg">
+            <BookInstallation className="btn-primary mt-auto self-center inline-block px-6 py-2 rounded-lg">
               Book Installation
-            </a>
+            </BookInstallation>
           </div>
         </div>
       </div>
