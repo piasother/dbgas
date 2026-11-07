@@ -11,7 +11,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
 
-const SITE_URL = (process.env.SITE_URL || "http://www.dbgas.co.zw").replace(/\/+$/, "");
+const SITE_URL = (process.env.SITE_URL || "https://www.dbgas.co.zw").replace(/\/+$/, "");
 
 const BUSINESS = {
   name: "DB Gas",
