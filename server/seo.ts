@@ -210,6 +210,17 @@ function headTags(page: SeoPage, url: string) {
   if (page.index) {
     tags.push(`<script type="application/ld+json">${JSON.stringify(localBusinessSchema()).replace(/</g, "\\u003c")}</script>`);
   }
+  if (page.path === "/") {
+    // Tells Google the site's name, so results read "DB Gas" instead of "dbgas.co.zw".
+    const website = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: BUSINESS.name,
+      alternateName: ["DB Gas Zimbabwe", "dbgas.co.zw"],
+      url: SITE_URL + "/",
+    };
+    tags.push(`<script type="application/ld+json">${JSON.stringify(website).replace(/</g, "\\u003c")}</script>`);
+  }
   return tags.join("\n    ");
 }
 
