@@ -4,12 +4,12 @@ export function Services() {
     {
       icon: "fas fa-gas-pump",
       title: "Cylinder Refills",
-      description: "Quick refills for 9kg, 19kg and 48kg cylinders at $1.95/kg."
+      description: "Quick refills for 9kg, 19kg and 48kg cylinders, priced per kg at the day's rate."
     },
     {
       icon: "fas fa-truck",
       title: "Wholesale Supply",
-      description: "Bulk LPG from our 25-tonne storage for commercial customers, from $1.55/kg."
+      description: "Bulk LPG from our 25-tonne storage for commercial customers, at competitive wholesale rates."
     },
     {
       icon: "fas fa-wrench",

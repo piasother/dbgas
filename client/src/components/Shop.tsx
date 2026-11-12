@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import type { Product } from '@shared/schema';
 import { ProductCard } from './ProductCard';
 import { RETAIL_PRICE_PER_KG, WHOLESALE_PRICE_PER_KG, formatUsd } from '@/lib/pricing';
+import { useShopStatus, whatsappOrderUrl, ORDER_PHONE_TEL } from '@/hooks/useShopStatus';
 
 export function Shop() {
+  const { ordersOpen } = useShopStatus();
   const { data: products, isLoading, error } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
@@ -51,20 +53,30 @@ export function Shop() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="section-title text-3xl md:text-4xl text-center mb-12">Shop Online</h2>
 
+        {!ordersOpen && (
+          <div className="rounded-2xl border border-blue-200 bg-white p-5 mb-6 text-center">
+            <p className="font-semibold text-blue-900">Order by phone or WhatsApp</p>
+            <p className="text-gray-600 text-sm mt-1">
+              LPG prices change daily, so we confirm today's price and delivery when you order.{' '}
+              <a href={whatsappOrderUrl()} target="_blank" rel="noopener noreferrer" className="underline font-semibold">WhatsApp us</a>
+              {' '}or call <a href={`tel:${ORDER_PHONE_TEL}`} className="underline font-semibold">071 331 4920</a>.
+            </p>
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-4 mb-12">
           <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-orange-700">Retail LPG</p>
               <p className="text-gray-600 text-sm mt-1">Cylinder refills for homes and small businesses</p>
             </div>
-            <p className="text-2xl font-bold text-orange-600 whitespace-nowrap">{formatUsd(RETAIL_PRICE_PER_KG)}<span className="text-base font-semibold text-gray-500">/kg</span></p>
+            <p className="text-2xl font-bold text-orange-600 whitespace-nowrap">{ordersOpen ? <>{formatUsd(RETAIL_PRICE_PER_KG)}<span className="text-base font-semibold text-gray-500">/kg</span></> : <span className="text-base">Call for today's price</span>}</p>
           </div>
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-800">Wholesale LPG</p>
               <p className="text-gray-600 text-sm mt-1">Bulk supply for commercial customers. <a href="#contact" className="underline">Contact us</a></p>
             </div>
-            <p className="text-2xl font-bold text-blue-900 whitespace-nowrap">{formatUsd(WHOLESALE_PRICE_PER_KG)}<span className="text-base font-semibold text-gray-500">/kg</span></p>
+            <p className="text-2xl font-bold text-blue-900 whitespace-nowrap">{ordersOpen ? <>{formatUsd(WHOLESALE_PRICE_PER_KG)}<span className="text-base font-semibold text-gray-500">/kg</span></> : <span className="text-base">Call for today's price</span>}</p>
           </div>
         </div>
 

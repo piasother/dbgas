@@ -124,8 +124,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Online ordering switch: set ORDERS_OPEN=true in cPanel to take orders online.
+  // Anything else (or unset) keeps ordering paused.
+  const ordersOpen = () => String(process.env.ORDERS_OPEN || "").trim().toLowerCase() === "true";
+  const ORDERS_PAUSED_MESSAGE =
+    "Online ordering is paused. Please call or WhatsApp 071 331 4920 for today's price and delivery.";
+  app.get("/api/shop-status", (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({ ordersOpen: ordersOpen() });
+  });
+
   // Create order (cash / EcoCash on delivery). Prices are computed on the server.
   app.post("/api/orders", async (req: any, res) => {
+    if (!ordersOpen()) return res.status(503).json({ error: ORDERS_PAUSED_MESSAGE });
     try {
       const body = req.body || {};
       const customerName = String(body.customerName || "").trim().slice(0, 120);
@@ -322,6 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PayNow payment integration. Prices come from the database, and an order is
   // only marked paid after Paynow confirms it (see server/orders.ts).
   app.post("/api/create-paynow-payment", isAuthenticated, async (req: any, res) => {
+    if (!ordersOpen()) return res.status(503).json({ error: ORDERS_PAUSED_MESSAGE });
     try {
       const { phoneNumber, email } = req.body || {};
       const userId = req.user.claims.sub;
