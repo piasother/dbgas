@@ -3,6 +3,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useShopStatus, whatsappOrderUrl, ORDER_PHONE_TEL } from '@/hooks/useShopStatus';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
+  const { ordersOpen } = useShopStatus();
 
   const handleAddToCart = async () => {
     // Check if user is authenticated
@@ -114,6 +116,22 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         
+        {!ordersOpen ? (
+        <div className="mt-auto flex flex-col gap-3">
+          <span className="text-sm font-semibold text-gray-600">Prices change daily. Call for today's price.</span>
+          <a
+            href={whatsappOrderUrl(product.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary w-full px-4 py-2.5 rounded-lg font-semibold inline-flex items-center justify-center whitespace-nowrap"
+          >
+            <i className="fab fa-whatsapp mr-2"></i>WhatsApp to order
+          </a>
+          <a href={`tel:${ORDER_PHONE_TEL}`} className="text-center text-sm font-semibold text-primary underline">
+            Or call 071 331 4920
+          </a>
+        </div>
+        ) : (
         <div className="mt-auto flex flex-col gap-3">
           <span className="price-tag whitespace-nowrap">${(product.price / 100).toFixed(2)}</span>
           <button 
@@ -127,6 +145,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {isAdding ? 'Adding...' : product.stockQuantity === 0 ? 'Out of Stock' : isAuthenticated ? 'Add to Cart' : 'Login to Order'}
           </button>
         </div>
+        )}
       </div>
     </div>
   );

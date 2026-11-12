@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useCart } from '@/hooks/useCart';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useShopStatus, whatsappOrderUrl } from '@/hooks/useShopStatus';
 
 interface CartProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export function Cart({ isOpen, onClose }: CartProps) {
   const { items, updateQuantity, removeItem, clearCart, getTotalPrice } = useCart();
   const { toast } = useToast();
   const [showCheckout, setShowCheckout] = useState(false);
+  const { ordersOpen } = useShopStatus();
   const [customerData, setCustomerData] = useState({
     customerName: '',
     customerPhone: '',
@@ -44,6 +46,14 @@ export function Cart({ isOpen, onClose }: CartProps) {
   });
 
   const handleCheckout = () => {
+    if (!ordersOpen) {
+      toast({
+        title: "Online ordering is paused",
+        description: "Please call or WhatsApp 071 331 4920 for today's price and delivery.",
+      });
+      window.open(whatsappOrderUrl(items.map((i) => `${i.quantity} x ${i.product.name}`).join(', ') || undefined), '_blank');
+      return;
+    }
     if (items.length === 0) {
       toast({
         title: "Your cart is empty",
@@ -155,6 +165,7 @@ export function Cart({ isOpen, onClose }: CartProps) {
                 <div className="flex justify-between items-center mb-4">
                   <strong className="text-lg">Total: ${(getTotalPrice() / 100).toFixed(2)}</strong>
                 </div>
+                {ordersOpen ? (<>
                 <a
                   href="/checkout"
                   className="btn-primary w-full py-3 rounded-lg font-semibold mb-3 inline-flex items-center justify-center"
@@ -168,6 +179,16 @@ export function Cart({ isOpen, onClose }: CartProps) {
                 >
                   Pay on Delivery / Collection
                 </button>
+                </>) : (<>
+                <p className="text-sm text-gray-600 mb-3 text-center">Online ordering is paused. Prices change daily, so please send us your order and we'll confirm today's price and delivery.</p>
+                <button 
+                  onClick={handleCheckout}
+                  className="btn-primary w-full py-3 rounded-lg font-semibold mb-3 inline-flex items-center justify-center"
+                >
+                  <i className="fab fa-whatsapp mr-2"></i>
+                  WhatsApp this order
+                </button>
+                </>)}
                 <button 
                   onClick={clearCart}
                   className="btn-outline-secondary w-full py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-50"

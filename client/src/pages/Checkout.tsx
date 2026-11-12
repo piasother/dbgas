@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, CreditCard, Smartphone, DollarSign } from "lucide-react";
 import { useLocation } from "wouter";
+import { useShopStatus, whatsappOrderUrl } from "@/hooks/useShopStatus";
 
 export function Checkout() {
   const { user, isAuthenticated } = useAuth();
@@ -18,6 +19,7 @@ export function Checkout() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [paymentMethod, setPaymentMethod] = useState("paynow");
+  const { ordersOpen } = useShopStatus();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
 
@@ -115,6 +117,31 @@ export function Checkout() {
 
   if (!isAuthenticated || items.length === 0) {
     return null;
+  }
+
+  if (!ordersOpen) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
+          <Card className="max-w-lg w-full text-center">
+            <CardHeader>
+              <CardTitle>Online ordering is paused</CardTitle>
+              <CardDescription>
+                LPG prices change daily, so we're taking orders by phone and WhatsApp for now.
+                Call 071 331 4920 or WhatsApp us for today's price and delivery.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <a href={whatsappOrderUrl(items.map((i) => `${i.quantity} x ${i.product.name}`).join(", "))} target="_blank" rel="noopener noreferrer">
+                  WhatsApp your order
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
   }
 
   return (
